@@ -1,0 +1,64 @@
+
+
+
+require_relative './intershop/intershop_modules/ptv_reader'
+require_relative './intershop/intershop_modules/rake_extensions'
+require_relative './intershop/intershop_modules/trm'
+
+# log gem_available? 'rake'
+# log gem_available? 'foobar'
+
+# puts "#{TRM.red}helo"
+
+# puts split_ptv_line 'respawn/sleep               unit            1 s'
+options = PTV.hash_from_path './intershop.ptv'
+
+log TRM.green  PTV.options_as_facet_json    options
+log TRM.orange PTV.options_as_untyped_json  options
+
+
+#-----------------------------------------------------------------------------------------------------------
+task :default => :update
+task :update  => :peru_update
+
+#-----------------------------------------------------------------------------------------------------------
+task :peru_sync do
+  sh 'peru sync'
+  Rake::Task[ 'intershop_npm_install' ].invoke
+  Rake::Task[ 'intershop_configuration_where_missing' ].invoke
+  end
+
+#-----------------------------------------------------------------------------------------------------------
+task :peru_update do
+  sh 'peru reup'
+  Rake::Task[ 'intershop_npm_install' ].invoke
+  Rake::Task[ 'intershop_configuration_where_missing' ].invoke
+  end
+
+#-----------------------------------------------------------------------------------------------------------
+task :intershop_npm_install do
+  sh '( cd intershop && npm install )'
+  end
+
+#-----------------------------------------------------------------------------------------------------------
+task :intershop_configuration_where_missing do
+  copy_if_new './intershop/intershop.ptv',                './intershop.ptv'
+  copy_if_new './intershop/copy-to-host-app/peru.yaml',   './peru.yaml'
+  copy_if_new './intershop/copy-to-host-app/rakefile',    './rakefile'
+  end
+
+
+
+# thx to https://stackoverflow.com/a/1290119/7568091
+# This always executes the task, but it doesn't execute its dependencies:
+
+# Rake::Task["build"].execute
+
+# This one executes the dependencies, but it only executes the task if it has not already been invoked:
+
+# Rake::Task["build"].invoke
+
+# This first resets the task's already_invoked state, allowing the task to then be executed again, dependencies and all:
+
+# Rake::Task["build"].reenable
+# Rake::Task["build"].invoke
