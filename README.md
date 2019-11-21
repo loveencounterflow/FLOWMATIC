@@ -37,8 +37,11 @@
 * can also use `update` instead of `insert`, but then no history visible
 * each component must have exactly one valid entry in `statelog`; these are called the 'Current Component
   State Vector' (CCSV)
-* current state of the FSM is then the union of the most recent action and the Current Component State
+* current state of the FSM is then the union of the most recent event and the Current Component State
   Vector
+* all **pairs**—states and events—always have a component in the first position—also called the
+  **topic**—and a either an aspect (for states) or else an action (for events) in the second position, the
+  **focus**.
 
 ## Complex State
 
@@ -67,12 +70,12 @@ The set of all state vectors whose elements enumerate each `°component:aspect` 
 
 ```
 {
-  [ °a::a1, °b::b1, °c::c1, ... ],
-  [ °a::a2, °b::b1, °c::c1, ... ],
-  [ °a::a3, °b::b1, °c::c1, ... ],
-  [ °a::a1, °b::b2, °c::c1, ... ],
-  [ °a::a2, °b::b2, °c::c1, ... ],
-  [ °a::a3, °b::b2, °c::c1, ... ],
+  [ °a:a1, °b:b1, °c:c1, ... ],
+  [ °a:a2, °b:b1, °c:c1, ... ],
+  [ °a:a3, °b:b1, °c:c1, ... ],
+  [ °a:a1, °b:b2, °c:c1, ... ],
+  [ °a:a2, °b:b2, °c:c1, ... ],
+  [ °a:a3, °b:b2, °c:c1, ... ],
   ...
   }
 ```
@@ -134,8 +137,9 @@ means of a term ID; this solution has the advantage that it leaves a natural ope
 assertion/negation, here called `pred` (for 'predicate'):
 
 ```
-                  'condition'               'consequence'
-                  'if'                      'then'
+                    'condition'               'consequence'
+                    'premise'                 'action'
+                    'if'                      'then'
 term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
 term:20     T       °plug:inserted        ⇒  °powerlight:on
