@@ -220,11 +220,12 @@ In order to have the bell just say 'pling', we insert a new internal verb, `°po
 then used to both toggle the switch and chime the bell; we note that this will only work if we can make it
 so that, on the one hand,
 
-* **states (`°x:y`) are eternally valid but get overriden by later states with the same component**,
+* **states (`°x:y`) are potentially eternally valid but get overriden by later states with the same
+  component,**
 
 and on the other,
 
-* **events (`°x^y`) are exhausted as soon as all direct consequences have been retrieved**.
+* **events (`°x^y`) are exhausted as soon as all direct consequences have been retrieved.**
 
 Since we want the automaton to only process a single event in each cycle, that also implies further that
 
