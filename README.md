@@ -46,11 +46,17 @@ from keys with various possible aspects follows a number of namespaced states:
     { °powerbutton:pressed, °powerbutton:released, }
 ```
 
-The powerset of all namespaced states lists all states that the model could in theory be in; of these, some,
-like `°mains:disconnected ∧ °magnetron:on` will be physically impossible, so should be logically excluded
+The powerset of all namespaced states lists all states that the model could in theory be in. Some of these,
+like `°mains:disconnected ∧ °magnetron:on`, will be physically impossible, so could be logically excluded
 from the states; others, such as `°door:open ∧ °magnetron:on` may be undesirable but possible. Of course, a
-microwave oven that is running with open doors is clearly broken, so there may be a point in introducing a
-rule like `°door:open ∧ °magnetron:on ⇒ °oven:broken`.
+microwave oven that is running with an open door is clearly broken, so there may be a point in introducing a
+rule like `°door:open ∧ °magnetron:on ⇒ °oven:broken`. After all, in real microwaves there will be both a
+switch in the door to sense whether the door is shut (instead of making the `°door:open` state solely
+reliant on prior actions without regard to actual physical state of the part), and, presumably, there will
+also be a sensor to measure current in critical parts of the circuitry, so it makes sense to introduce a
+safety net that cuts the mains should `°door:open` and `°magnetron:on` ever coincide. In other words, it
+will always be possible to either rule out unwanted or physically unlikely or even impossible states, or
+else to connect them to emergency handlers, if only to test the functionality of the state machine.
 
 States are `°component:aspect` pairs. The `°component` identifies a material or abstract part of a real or
 imaginary machine; the `:aspect`—in its simplest form a binary tag—encodes the position that part is in or
