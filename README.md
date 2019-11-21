@@ -1,11 +1,13 @@
 
+
+![](https://raw.githubusercontent.com/loveencounterflow/flowmatic/master/artwork/flowmatic-logo-3-1-small.png)
+
 # FlowMatic
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [FlowMatic](#flowmatic)
   - [Complex State](#complex-state)
   - [Conjunctions and Disjunctions](#conjunctions-and-disjunctions)
   - [Continuous Values](#continuous-values)
