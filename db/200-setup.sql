@@ -13,140 +13,124 @@
 \echo :signal ———{ :filename 1 }———:reset
 drop schema if exists X cascade; create schema X;
 
+
+-- =========================================================================================================
+--
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
-create domain X.positive_integer  as integer  check ( value > 0 );
-create domain X.component_name    as text     check ( value ~ '^°.+' );
-create domain X.verb_name         as text     check ( value ~ '^\^.+' );
-create domain X.aspect_name       as text     check ( value ~ '^:.+' );
--- create domain X.atom_name         as text     check ( value ~ '^[°^:].+' );
+create domain X.positive_integer  as integer  check ( value > 0                   );
+create domain X.nonempty_text     as text     check ( value ~ '.+'                );
+create domain X.component_name    as text     check ( value ~ '^°.+'              );
+create domain X.verb_name         as text     check ( value ~ '^\^.+'             );
+create domain X.aspect_name       as text     check ( value ~ '^:.+'              );
+create domain X.topic_name        as text     check ( value ~ '^°.+'              ); -- i.e., component
+create domain X.focus_name        as text     check ( value ~ '^[:^].+'           ); -- i.e., verb or aspect
+create domain X.atom_name         as text     check ( value ~ '^[°^:].+'          ); -- i.e., component, verb, or aspect
+create domain X.sigil             as text     check ( value ~ '^[°^:]$'           );
+create domain X.sigilcombo        as text     check ( value ~ '^([°^:])|(°[^:])$' );
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 3 }———:reset
-create table X.components (
-  component   X.component_name unique not null primary key,
-  comment     text );
 
+-- =========================================================================================================
+--
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 4 }———:reset
-create table X.verbs (
-  verb        X.verb_name unique not null primary key,
-  comment     text );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 5 }———:reset
-create table X.aspects (
-  aspect      X.aspect_name unique not null primary key,
-  comment     text );
+\echo :signal ———{ :filename 6 }———:reset
+create table X.kinds (
+    kind      X.nonempty_text   not null  unique,
+    sigil     X.sigilcombo      not null  unique,
+    comment   X.nonempty_text,
+  primary key ( kind ) );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 6 }———:reset
-create view X.atoms as (
-  ( select null::text as atom,  null::text as type, null::text as comment where false ) union all
-  ( select component,           'component',        comment from X.components         ) union all
-  ( select verb,                'verb',             comment from X.verbs              ) union all
-  ( select aspect,              'aspect',           comment from X.aspects            )
-  order by type, atom );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 7 }———:reset
-create table X.states (
-  component   X.component_name  not null references X.components,
-  aspect      X.aspect_name     not null references X.aspects,
-  comment     text,
-  primary key ( component, aspect ) );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 7 }———:reset
-create table X.defaultstates (
-  component   X.component_name  not null,
-  aspect      X.aspect_name     not null,
-  primary key ( component, aspect ),
-  foreign key ( component, aspect ) references X.states );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 8 }———:reset
-create table X.events (
-  component   X.component_name  not null references X.components,
-  verb        X.verb_name       not null references X.verbs,
-  comment     text,
-  primary key ( component, verb ) );
+-- ### TAINT add check that sigil matches kind
+create table X.atoms (
+    atom      X.atom_name       not null  unique,
+    kind      text              not null  references X.kinds ( kind ),
+    comment   X.nonempty_text,
+  primary key ( atom ) );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 6 }———:reset
-create view X.pairs as (
-  with V1 as ( ( select
-        null::text                                as atom1,
-        null::text                                as atom2,
-        null::text                                as type,
-        null::boolean                             as dflt,
-        null::text                                as comment,
-        null::integer                             as _priority
-      where false ) union all
-  ( select
-        component                                 as atom1,
-        verb                                      as atom2,
-        'event'                                   as type,
-        null                                      as dflt,
-        comment                                   as comment,
-        null                                      as _priority
-      from X.events ) union all
-  ( select
-        ST.component                              as atom1,
-        ST.aspect                                 as atom2,
-        'state'                                   as type,
-        DS.component is not null                  as dflt,
-        ST.comment                                as comment,
-        case when ( DS.component is not null ) then 1 else 2 end  as _priority
-      from X.states as ST
-      left join X.defaultstates as DS using ( component, aspect ) ) )
-  select
-      atom1,
-      atom2,
-      type,
-      dflt,
-      comment
-    from V1
-  order by
-    atom1, _priority, atom2 );
+insert into X.kinds ( kind, sigil, comment ) values
+  ( 'component',  '°',  'models interacting parts of the system'            ),
+  ( 'verb',       '^',  'models what parts of the system can do'            ),
+  ( 'aspect',     ':',  'models malleable phases of components'             ),
+  ( 'event',      '°^', 'models ex- and internal actuations of the system'  ),
+  ( 'state',      '°:', 'models static and dynamic postures of the system'  );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+insert into X.atoms ( atom, kind, comment ) values
+  ( '°FSM',       'component',  'pseudo-component for the automaton itself' ),
+  ( ':IDLE',      'aspect',     'when the automaton is not in use'          ),
+  ( ':ACTIVE',    'aspect',     'when the automaton is in use'              ),
+  ( '^RESET',     'verb',       'put the automaton in its initial state'    );
+
+
+-- =========================================================================================================
+--
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+-- ### TAINT add constraint to check that sigils, kinds match
+-- ### TAINT add constraint to check that exactly one state has dflt = true
+-- ### TAINT add constraint to check that all events have dflt = false (or null)
+create table X.pairs (
+    topic       X.topic_name      not null  references X.atoms ( atom ),
+    focus       X.focus_name      not null  references X.atoms ( atom ),
+    predicate   jsonb             not null  default 'true'::jsonb,
+    kind        text              not null  references X.kinds ( kind ),
+    dflt        boolean           not null  default false,
+    comment     X.nonempty_text,
+  primary key ( topic, focus )
+  -- constraint on ( topic ) check
+);
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+insert into X.pairs ( topic, focus, kind, dflt, comment ) values
+  ( '°FSM',     ':IDLE',      'state',  true,    'the automaton is not in use'                ),
+  ( '°FSM',     ':ACTIVE',    'state',  false,   'the automaton is in use'                    ),
+  ( '°FSM',     '^RESET',     'event',  false,   'reset the automaton to its initial state'   );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
 create table X.transitions (
-  -- id              bigint generated always as identity primary key,
-  src_component   X.component_name      not null,
-  src_aspect      X.aspect_name         not null,
-  evt_component   X.component_name      not null,
-  evt_verb        X.verb_name           not null,
-  trg_component   X.component_name      not null,
-  trg_aspect      X.aspect_name         not null,
-  primary key ( src_component, src_aspect, evt_component, evt_verb, trg_component, trg_aspect ),
-  foreign key ( src_component, src_aspect ) references X.states ( component, aspect ),
-  foreign key ( evt_component, evt_verb   ) references X.events ( component, verb   ),
-  foreign key ( trg_component, trg_aspect ) references X.states ( component, aspect ) );
+    id                bigint generated always as identity primary key,
+    termid            bigint        not null,
+    topic             X.topic_name  not null,
+    focus             X.focus_name  not null,
+    predicate         jsonb         not null  default 'true'::jsonb,
+    action            bigint                  references X.transitions ( id ),
+  unique ( id, termid, topic, focus, predicate, action ),
+  foreign key ( topic, focus ) references X.pairs );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset
+insert into X.transitions ( termid, topic, focus, action ) values
+  ( 1, '°FSM',  ':IDLE',    2     ),
+  ( 1, '°FSM',  '^RESET',   2     ),
+  ( 2, '°FSM',  ':ACTIVE',  null  );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 10 }———:reset
+-- TAINT add constraint to ensure only events, not other pair kinds, are entered
+-- OTOH should be clear from domains used for names
 create table X.eventlog (
-  id          bigint generated always as identity primary key,
-  t           timestamp with time zone  not null default now(),
-  component   X.component_name          not null references X.components,
-  verb        X.verb_name               not null references X.verbs );
+    id          bigint generated always as identity primary key,
+    t           timestamp with time zone  not null default now(),
+    topic       X.component_name          not null,
+    focus       X.verb_name               not null,
+  foreign key ( topic, focus ) references X.pairs ( topic, focus ) );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 11 }———:reset
 create table X.statelog (
-  id          bigint generated always as identity primary key,
-  t           timestamp with time zone  not null default now(),
-  component   X.component_name          not null references X.components,
-  aspect      X.aspect_name             not null references X.aspects );
+    id          bigint generated always as identity primary key,
+    t           timestamp with time zone  not null default now(),
+    topic       X.component_name          not null,
+    focus       X.aspect_name             not null,
+  foreign key ( topic, focus ) references X.pairs ( topic, focus ) );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ :filename 12 }———:reset
--- create table X.transitions (
---   component   text                      not null references X.components ( component ),
---   verb        text                      not null references X.verbs ( verb ),
---   primary key ( component, verb ) );
 
 
 
