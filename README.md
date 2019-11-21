@@ -46,22 +46,47 @@ from keys with various possible aspects follows a number of namespaced states:
     { °powerbutton:pressed, °powerbutton:released, }
 ```
 
-The powerset of all namespaced states lists all states that the model could in theory be in. Some of these,
-like `°mains:disconnected ∧ °magnetron:on`, will be physically impossible, so could be logically excluded
-from the states; others, such as `°door:open ∧ °magnetron:on` may be undesirable but possible. Of course, a
-microwave oven that is running with an open door is clearly broken, so there may be a point in introducing a
-rule like `°door:open ∧ °magnetron:on ⇒ °oven:broken`. After all, in real microwaves there will be both a
-switch in the door to sense whether the door is shut (instead of making the `°door:open` state solely
-reliant on prior actions without regard to actual physical state of the part), and, presumably, there will
-also be a sensor to measure current in critical parts of the circuitry, so it makes sense to introduce a
-safety net that cuts the mains should `°door:open` and `°magnetron:on` ever coincide. In other words, it
-will always be possible to either rule out unwanted or physically unlikely or even impossible states, or
-else to connect them to emergency handlers, if only to test the functionality of the state machine.
-
 States are `°component:aspect` pairs. The `°component` identifies a material or abstract part of a real or
 imaginary machine; the `:aspect`—in its simplest form a binary tag—encodes the position that part is in or
 the activity that the component is performing. Static aspects and dynamic aspects ('activities') are not
 formally separated.
+
+The set of all state vectors whose elements enumerate each `°component:aspect` pair:
+
+```
+{
+  [ °a:^a1, °b:^b1, °c:^c1, ... ],
+  [ °a:^a2, °b:^b1, °c:^c1, ... ],
+  [ °a:^a3, °b:^b1, °c:^c1, ... ],
+  [ °a:^a1, °b:^b2, °c:^c1, ... ],
+  [ °a:^a2, °b:^b2, °c:^c1, ... ],
+  [ °a:^a3, °b:^b2, °c:^c1, ... ],
+  ...
+  }
+```
+
+will be fairly large even for smallish models; for example, a system with three components which assume one
+of 3, 2, and 4 aspects, respectively, is `3 * 2 * 4 = 24`; add two more binary components and you're already
+looking at `24 * 2 * 2 = 92` possible states. This phenomenon—that complex machinery, most of all computers
+with their gazillions of binary switches, may be in any one of an unfathomable huge number of distinct
+states—is known as the [combinatorial state
+explosion](https://en.wikipedia.org/wiki/Combinatorial_explosion) and can be seen as one of the motivating
+factors to research finite state automata at all.
+
+As far as an automaton is intended to model a real-world machine, e.g. a microwave oven, a fair number of
+the multitude of expressible states may be deemed physically impossible (like `°mains:disconnected ∧
+°magnetron:on`), so could be logically excluded from the states.
+
+Other state vectors, such as `°door:open ∧ °magnetron:on` may be undesirable but imaginable when something
+goes wrong. Of course, a microwave oven that is running with an open door is clearly broken, so there may be
+a point in introducing a rule like `°door:open ∧ °magnetron:on ⇒ °oven:broken`. After all, in real
+microwaves there will be both a switch in the door to sense whether the door is shut (instead of making the
+`°door:open` state solely reliant on prior actions without regard to actual physical state of the part),
+and, presumably, there will also be a sensor to measure current in critical parts of the circuitry, so it
+makes sense to introduce a safety net that cuts the mains should `°door:open` and `°magnetron:on` ever
+coincide. In other words, it will always be possible to either rule out unwanted or physically unlikely and
+impossible states, or else to connect them to emergency handlers, both to test the functionality of the
+automaton itself and as a guide which safety measures could be implemented in the physical machine.
 
 ## Conjunctions and Disjunctions
 
