@@ -59,6 +59,7 @@ __pycache__
 # python_modules/tests/__pycache__
 
 .peru
-
+intershop/node_modules
+intershop/*
 
 
