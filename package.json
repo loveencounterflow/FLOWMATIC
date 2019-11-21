@@ -1,0 +1,25 @@
+{
+  "name": "flowmatic",
+  "version": "0.3.0",
+  "description": "",
+  "main": "lib/main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loveencounterflow/flowmatic.git"
+  },
+  "dependencies": {
+    "cnd": "^4.6.0",
+    "executable": "^4.1.1",
+    "shelljs": "^0.8.3",
+    "stackman": "^4.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
