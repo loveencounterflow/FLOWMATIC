@@ -1,7 +1,7 @@
 
 /* ###################################################################################################### */
 \ir './test-begin.sql'
-\timing on
+\timing off
 -- \set ECHO queries
 
 -- select array_agg( x[ 1 ] ) from lateral regexp_matches( '⿱亠父, ⿱六乂, ⿱六乂', '([^\s,]+)', 'g' ) as q1 ( x );
@@ -11,97 +11,121 @@
 
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 1 }———:reset
+\echo :signal ———{ :filename 1 }———:reset
 drop schema if exists X cascade;
 \ir '../200-setup.sql'
+\set filename 200-setup.test.sql
 \pset pager on
 drop schema if exists _X_ cascade;
 create schema _X_;
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 2 }———:reset
+\echo :signal ———{ :filename 2 }———:reset
 insert into X.components ( component, comment ) values
+  ( '°FSM',           'pseudo-component for the automaton itself' ),
   ( '°heatinglight',  'light to indicate oven is heating' ),
   ( '°powerlight',    'light to indicate oven is switched on' ),
   ( '°mainswitch',    'button to switch microwave on and off' );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 3 }———:reset
+\echo :signal ———{ :filename 3 }———:reset
 insert into X.aspects ( aspect, comment ) values
+  ( ':IDLE',        'when the automaton is not in use'        ),
+  ( ':ACTIVE',      'when the automaton is in use'            ),
   ( ':pressed',     'when a button is in ''on'' position'     ),
   ( ':released',    'when a button is in ''off'' position'    ),
   ( ':on',          'something is active'                     ),
   ( ':off',         'something is inactive'                   );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 4 }———:reset
+\echo :signal ———{ :filename 4 }———:reset
 insert into X.verbs ( verb, comment ) values
-  ( '^press',   'press a button'              ),
-  ( '^release', 'release a button'            );
+  ( '^RESET',   'put the automaton in its initial state'  ),
+  ( '^press',   'press a button'                          ),
+  ( '^release', 'release a button'                        );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 5 }———:reset
+\echo :signal ———{ :filename 5 }———:reset
 insert into X.states ( component, aspect, comment ) values
-  ( '°mainswitch', ':pressed',    'the power button is in ''on'' position'  ),
-  ( '°mainswitch', ':released',   'the power button is in ''off'' position' ),
-  ( '°powerlight', ':on',         'the power light is bright'  ),
-  ( '°powerlight', ':off',        'the power light is dark' );
-  ;
+  ( '°FSM',         ':IDLE',      'the automaton is not in use'             ),
+  ( '°FSM',         ':ACTIVE',    'the automaton is in use'                 ),
+  ( '°mainswitch',  ':pressed',   'the power button is in ''on'' position'  ),
+  ( '°mainswitch',  ':released',  'the power button is in ''off'' position' ),
+  ( '°powerlight',  ':on',        'the power light is bright'               ),
+  ( '°powerlight',  ':off',       'the power light is dark'                 );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 6 }———:reset
+\echo :signal ———{ :filename 5 }———:reset
+insert into X.defaultstates ( component, aspect ) values
+-- ### TAINT introduce state '°mainswitch:unknown' as we cannot know whether button is released when unplugged ###
+  ( '°FSM',         ':IDLE'       ),
+  ( '°mainswitch',  ':released'   ),
+  ( '°powerlight',  ':off'        );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
 insert into X.events ( component, verb, comment ) values
-  ( '°mainswitch', '^press',   'press the power button'   ),
-  ( '°mainswitch', '^release', 'release the power button' );
+  ( '°FSM',         '^RESET',     'reset the automaton to its initial state'  ),
+  ( '°mainswitch',  '^press',     'press the power button'                    ),
+  ( '°mainswitch',  '^release',   'release the power button'                  );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 6 }———:reset
+\echo :signal ———{ :filename 7 }———:reset
 insert into X.transitions ( src_component, src_aspect, evt_component, evt_verb, trg_component, trg_aspect ) values
   -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
+  ( '°FSM',         ':IDLE',      '°FSM',           '^RESET',     '°FSM',           ':ACTIVE'     ),
   ( '°mainswitch',  ':released',  '°mainswitch',    '^press',     '°mainswitch',    ':pressed'    ),
   ( '°mainswitch',  ':pressed',   '°mainswitch',    '^release',   '°mainswitch',    ':released'   ),
-  ( '°powerlight',  ':off',       '°mainswitch',    '^press',     '°powerlight',    ':on'    ),
-  ( '°powerlight',  ':on',        '°mainswitch',    '^release',   '°powerlight',    ':off'   );
+  ( '°powerlight',  ':off',       '°mainswitch',    '^press',     '°powerlight',    ':on'         ),
+  ( '°powerlight',  ':on',        '°mainswitch',    '^release',   '°powerlight',    ':off'        );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 7 }———:reset
+\echo :signal ———{ :filename 8 }———:reset
 insert into X.eventlog ( component, verb ) values
-  ( '°mainswitch', '^press'   ),
-  ( '°mainswitch', '^release' );
+  ( '°FSM',         '^RESET'    ),
+  -- ( '°FSM',         '^START'    ),
+  ( '°mainswitch',  '^press'    ),
+  ( '°mainswitch',  '^release'  );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 8 }———:reset
+\echo :signal ———{ :filename 9 }———:reset
 -- .........................................................................................................
-\echo :reverse:steel X.components   :reset
-select * from X.components          order by component;
+\echo :reverse:steel X.components     :reset
+select * from X.components            order by component;
 -- .........................................................................................................
-\echo :reverse:steel X.aspects      :reset
-select * from X.aspects             order by aspect;
+\echo :reverse:steel X.aspects        :reset
+select * from X.aspects               order by aspect;
 -- .........................................................................................................
-\echo :reverse:steel X.verbs        :reset
-select * from X.verbs               order by verb;
+\echo :reverse:steel X.verbs          :reset
+select * from X.verbs                 order by verb;
 -- .........................................................................................................
-\echo :reverse:steel X.states       :reset
-select * from X.states              order by component, aspect;
+\echo :reverse:steel X.states         :reset
+select * from X.states                order by component, aspect;
 -- .........................................................................................................
-\echo :reverse:steel X.atoms        :reset
-select * from X.atoms               order by type, atom;
+\echo :reverse:steel X.defaultstates  :reset
+select * from X.defaultstates         order by component, aspect;
 -- .........................................................................................................
-\echo :reverse:steel X.events       :reset
-select * from X.events              order by component, verb;
+\echo :reverse:steel X.events         :reset
+select * from X.events                order by component, verb;
 -- .........................................................................................................
-\echo :reverse:steel X.transitions  :reset
-select * from X.transitions         order by src_component, src_aspect, evt_component, evt_verb, trg_component, trg_aspect;
+\echo :reverse:yellow X.atoms         :reset
+select * from X.atoms                 ;
 -- .........................................................................................................
-\echo :reverse:steel X.eventlog     :reset
-select * from X.eventlog            order by t;
+\echo :reverse:yellow X.pairs         :reset
+select * from X.pairs                 ;
 -- .........................................................................................................
-\echo :reverse:steel X.statelog     :reset
-select * from X.statelog            order by t;
+\echo :reverse:steel X.transitions    :reset
+select * from X.transitions           order by src_component, src_aspect, evt_component, evt_verb, trg_component, trg_aspect;
+-- .........................................................................................................
+\echo :reverse:lime X.eventlog        :reset
+select * from X.eventlog              order by t;
+-- .........................................................................................................
+\echo :reverse:lime X.statelog        :reset
+select * from X.statelog              order by t;
 
 
 /* ###################################################################################################### */
-\echo :red ———{ 9 }———:reset
+\echo :red ———{ :filename 10 }———:reset
 \quit
 
 -- select * from FACTORS._010_factors;

@@ -5,16 +5,16 @@
 \ir './set-signal-color.sql'
 -- \ir './test-begin.sql'
 -- \pset pager on
-\timing on
+\timing off
+\set filename 200-setup.sql
 -- -- \set ECHO queries
 
-
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 1 }———:reset
+\echo :signal ———{ :filename 1 }———:reset
 drop schema if exists X cascade; create schema X;
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 2 }———:reset
+\echo :signal ———{ :filename 2 }———:reset
 create domain X.positive_integer  as integer  check ( value > 0 );
 create domain X.component_name    as text     check ( value ~ '^°.+' );
 create domain X.verb_name         as text     check ( value ~ '^\^.+' );
@@ -22,33 +22,34 @@ create domain X.aspect_name       as text     check ( value ~ '^:.+' );
 -- create domain X.atom_name         as text     check ( value ~ '^[°^:].+' );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 3 }———:reset
+\echo :signal ———{ :filename 3 }———:reset
 create table X.components (
   component   X.component_name unique not null primary key,
   comment     text );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 4 }———:reset
+\echo :signal ———{ :filename 4 }———:reset
 create table X.verbs (
   verb        X.verb_name unique not null primary key,
   comment     text );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 5 }———:reset
+\echo :signal ———{ :filename 5 }———:reset
 create table X.aspects (
   aspect      X.aspect_name unique not null primary key,
   comment     text );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 5 }———:reset
+\echo :signal ———{ :filename 6 }———:reset
 create view X.atoms as (
   ( select null::text as atom,  null::text as type, null::text as comment where false ) union all
   ( select component,           'component',        comment from X.components         ) union all
   ( select verb,                'verb',             comment from X.verbs              ) union all
-  ( select aspect,              'aspect',           comment from X.aspects            ) );
+  ( select aspect,              'aspect',           comment from X.aspects            )
+  order by type, atom );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 6 }———:reset
+\echo :signal ———{ :filename 7 }———:reset
 create table X.states (
   component   X.component_name  not null references X.components,
   aspect      X.aspect_name     not null references X.aspects,
@@ -74,27 +75,27 @@ create table X.transitions (
   trg_aspect      X.aspect_name         not null,
   primary key ( src_component, src_aspect, evt_component, evt_verb, trg_component, trg_aspect ),
   foreign key ( src_component, src_aspect ) references X.states ( component, aspect ),
-  foreign key ( evt_component, evt_verb )   references X.events ( component, verb   ),
+  foreign key ( evt_component, evt_verb   ) references X.events ( component, verb   ),
   foreign key ( trg_component, trg_aspect ) references X.states ( component, aspect ) );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 9 }———:reset
+\echo :signal ———{ :filename 10 }———:reset
 create table X.eventlog (
+  id          bigint generated always as identity primary key,
   t           timestamp with time zone  not null default now(),
   component   X.component_name          not null references X.components,
-  verb        X.verb_name               not null references X.verbs,
-  primary key ( component, verb ) );
+  verb        X.verb_name               not null references X.verbs );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 9 }———:reset
+\echo :signal ———{ :filename 11 }———:reset
 create table X.statelog (
+  id          bigint generated always as identity primary key,
   t           timestamp with time zone  not null default now(),
   component   X.component_name          not null references X.components,
-  aspect      X.aspect_name             not null references X.aspects,
-  primary key ( component, aspect ) );
+  aspect      X.aspect_name             not null references X.aspects );
 
 -- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ 10 }———:reset
+-- \echo :signal ———{ :filename 12 }———:reset
 -- create table X.transitions (
 --   component   text                      not null references X.components ( component ),
 --   verb        text                      not null references X.verbs ( verb ),
@@ -103,7 +104,7 @@ create table X.statelog (
 
 
 /* ###################################################################################################### */
-\echo :red ———{ 11 }———:reset
+\echo :red ———{ :filename 13 }———:reset
 \quit
 
 /* ###################################################################################################### */
