@@ -73,8 +73,47 @@ create table X.events (
   primary key ( component, verb ) );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 8 }———:reset
+\echo :signal ———{ :filename 6 }———:reset
+create view X.pairs as (
+  with V1 as ( ( select
+        null::text                                as atom1,
+        null::text                                as atom2,
+        null::text                                as type,
+        null::boolean                             as dflt,
+        null::text                                as comment,
+        null::integer                             as _priority
+      where false ) union all
+  ( select
+        component                                 as atom1,
+        verb                                      as atom2,
+        'event'                                   as type,
+        null                                      as dflt,
+        comment                                   as comment,
+        null                                      as _priority
+      from X.events ) union all
+  ( select
+        ST.component                              as atom1,
+        ST.aspect                                 as atom2,
+        'state'                                   as type,
+        DS.component is not null                  as dflt,
+        ST.comment                                as comment,
+        case when ( DS.component is not null ) then 1 else 2 end  as _priority
+      from X.states as ST
+      left join X.defaultstates as DS using ( component, aspect ) ) )
+  select
+      atom1,
+      atom2,
+      type,
+      dflt,
+      comment
+    from V1
+  order by
+    atom1, _priority, atom2 );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 9 }———:reset
 create table X.transitions (
+  -- id              bigint generated always as identity primary key,
   src_component   X.component_name      not null,
   src_aspect      X.aspect_name         not null,
   evt_component   X.component_name      not null,
