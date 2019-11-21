@@ -1,8 +1,8 @@
 
-# InterState (working title)
+# FlowMatic
 
 
-https://github.com/davidmoten/state-machine
+<!-- https://github.com/davidmoten/state-machine -->
 
 ## Complex State
 
@@ -55,27 +55,28 @@ Keys may also represent ongoing actions such as `°cooking:{ongoing,stopped,inte
 State vectors can be linked via boolean logic:
 
 ```
-°door:closed          and °door^open            =>  °door:open
-°door:open            and °door^open            =>  °door:open
-°door:open            and °plug^insert          =>  °door:open
-°magnetron:on         and °door^open            =>  °magnetron:off
-°door^open                                      =>  °magnetron:off
+°door:closed    ∧   °door^open              =>  °door:open
+°door:open      ∧   °door^open              =>  °door:open
+°door:open      ∧   °plug^insert            =>  °door:open
+°magnetron:on   ∧   °door^open              =>  °magnetron:off
+°plug:loose     ∨   °powerbutton:released   =>  °powerlight:off
+°door^open                                  =>  °magnetron:off
 ```
 
-The disjunction (`or` operator or 'union') we can safely discard with as it is easily representable by
-inserting multiple transitions:
+The disjunction (`∨` or `or` operator or 'union') we can safely discard with as it is easily representable
+by inserting multiple transitions:
 
 ```
-°plug:loose or °powerbutton:released  => °powerlight:off
+°plug:loose ∨ °powerbutton:released   => °powerlight:off
 ==>
 °plug:loose                           => °powerlight:off
 °powerbutton:released                 => °powerlight:off
 ```
 
-However, conjunctions (`and` operator or 'intersection') must still be explicitly expressed:
+However, conjunctions (`∧` or `and` operator or 'intersection') must still be explicitly expressed:
 
 ```
-°plug:inserted and °powerbutton:pressed  =>  °powerlight:on
+°plug:inserted ∧ °powerbutton:pressed  =>  °powerlight:on
 ```
 
 There are two ways to capture this in (Postgre)SQL: either with arrays of values, or by grouping clauses by
@@ -107,15 +108,15 @@ of) conditions (and optional intermediaries) to consequences**. In the below tab
 `term:99` to show that **phrases may overlap in their consequences**; this is the effect of disjunctions:
 
 ```
-( a ) or ( b and c ) => d => ( e and f )
+( a ) ∨ ( b ∧ c ) => d => ( e ∧ f )
 ```
 
-holds exactly when
+holds when
 
 ```
-( ( a ) => d => ( e and f ) )
-or
-( ( b and c ) => d => ( e and f ) )
+( (   a   ) => d => ( e ∧ f ) )
+∨
+( ( b ∧ c ) => d => ( e ∧ f ) )
 ```
 
 holds.
@@ -149,9 +150,11 @@ One may note at this junction that the states of the `°powerbutton` component h
 satisfactorily; after all, there should normally some kind of user interaction that is responsible for
 toggling its state. Regardless of whether we have a switch that requires flipping or pressing it, what the
 user does is reverse the state of switch by some kind of gesture; let's model this as a verb `^actuate`.
-This, then, leads to the next refinement; observe that `°powerbutton^actuate` is like a public member of the
-microwave's 'API', as it were, whereas `°powerlight^on` and `^off` are like private methods in that they
-cannot be directly caused from outside of the automaton:
+This, then, leads to the next refinement.
+
+Observe that `°powerbutton^actuate` is like a **public member** of the microwave's 'API', as it were,
+whereas `°powerlight^on` and `^off` are like **private members** in that they cannot be directly caused from
+outside of the automaton:
 
 ```
 term        pred    source_item           =>  target_item
@@ -160,7 +163,7 @@ term:10     T       °powerbutton^actuate  =>  term:11
 term:10     T       °powerbutton:released =>  term:11
 term:11     T       °powerbutton:pressed      ∎
 term:12     T       °powerbutton^actuate  =>  term:14
-term:13     T       °powerbutton:pressed  =>  term:14
+term:12     T       °powerbutton:pressed  =>  term:14
 term:14     T       °powerbutton:released     ∎
 ——————————— ——————— ————————————————————— ——— ———————————————————
 term:20     T       °plug:inserted        =>  term:21
@@ -170,8 +173,8 @@ term:22     T       °bell^chime               ∎
 term:22     T       °powerlight:on            ∎
 ```
 
-There's yet another problem apparent: in the chain `°plug:inserted and °powerbutton:pressed =>
-°powerlight^on and °bell^chime`, no mention of time or rising vs. falling flanks is made; therefore, if we
+There's yet another problem apparent: in the chain `°plug:inserted ∧ °powerbutton:pressed =>
+°powerlight^on ∧ °bell^chime`, no mention of time or rising vs. falling flanks is made; therefore, if we
 interpreted the phrase as being *timeless*, then the `°bell` should be `^chime`ing all the time. This is
 probably not what the customer wants, an oven that rings all the time when being in use.
 
@@ -189,9 +192,9 @@ Since we want the automaton to only process a single event in each cycle, that a
 
 * **there are no truly simultaneous events: each event comes before or after any other, if any**
 
-meaning that in order to model conjunctions of events: `°a^b and °u^v => ...`, we have to do so by having
+meaning that in order to model conjunctions of events: `°a^b ∧ °u^v => ...`, we have to do so by having
 the events first cause a state change: `°a^b => °c:d; °u^v => °w:x;`, and only when those partial states do
-combine can a consequence happen: `°c:d and °w:x => ...`. So `°switch^activate and °plug^insert` can *never*
+combine can a consequence happen: `°c:d ∧ °w:x => ...`. So `°switch^activate ∧ °plug^insert` can *never*
 be fulfilled; this will, therefore, be ruled out by a higher-order regulation to ensure that
 
 * **a phrase may only contain at most one event**.
@@ -200,8 +203,8 @@ Instead, a more circumlocutionary suite like
 
 ```
 °switch^activate                        =>  °switch:activated;
-  °plug^insert                            =>  °plug:inserted;
-    °switch:activated and °plug:inserted    =>  °device^start`
+°plug^insert                            =>  °plug:inserted;
+°switch:activated ∧ °plug:inserted      =>  °device^start`
 ```
 
 must be used.
@@ -234,7 +237,7 @@ term:22     T       °powerlight:on            ∎
 * `°light:on`         `=` `true`
 
 
-## If/ Then/ Else Conditions
+## If / Then / Else Conditions
 
 ## Loops
 

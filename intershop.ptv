@@ -3,10 +3,14 @@
 
 
 #-----------------------------------------------------------------------------------------------------------
-intershop/host/name                   ::text=            interstate
-intershop/db/port                     ::integer=         5432
-intershop/db/name                     ::text=            ${intershop/host/name}
-intershop/db/user                     ::text=            ${intershop/db/name}
-intershop/rpc/port                    ::integer=         23001
-intershop/rpc/host                    ::text=            127.0.0.1
+intershop/host/name                   ::text=             flowmatic
+intershop/db/port                     ::integer=          5432
+intershop/db/name                     ::text=             ${intershop/host/name}
+intershop/db/user                     ::text=             ${intershop/db/name}
+intershop/rpc/port                    ::integer=          23001
+intershop/rpc/host                    ::text=             127.0.0.1
+
+#-----------------------------------------------------------------------------------------------------------
+flowmatic/debugging                   ::boolean=          false
+# flowmatic/debugging                 ::boolean=          true
 
