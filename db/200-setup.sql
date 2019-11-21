@@ -57,7 +57,15 @@ create table X.states (
   primary key ( component, aspect ) );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ 7 }———:reset
+\echo :signal ———{ :filename 7 }———:reset
+create table X.defaultstates (
+  component   X.component_name  not null,
+  aspect      X.aspect_name     not null,
+  primary key ( component, aspect ),
+  foreign key ( component, aspect ) references X.states );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 8 }———:reset
 create table X.events (
   component   X.component_name  not null references X.components,
   verb        X.verb_name       not null references X.verbs,
