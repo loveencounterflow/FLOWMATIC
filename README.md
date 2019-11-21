@@ -8,6 +8,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
+  - [Representation of State](#representation-of-state)
   - [Complex State](#complex-state)
   - [Conjunctions and Disjunctions](#conjunctions-and-disjunctions)
   - [Continuous Values](#continuous-values)
@@ -27,6 +28,17 @@
 
 
 <!-- https://github.com/davidmoten/state-machine -->
+
+## Representation of State
+
+* pair component, aspect (and possibly parameter)
+* recorded in table `statelog`
+* append-only, only the most recent entry counts
+* can also use `update` instead of `insert`, but then no history visible
+* each component must have exactly one valid entry in `statelog`; these are called the 'Current Component
+  State Vector' (CCSV)
+* current state of the FSM is then the union of the most recent action and the Current Component State
+  Vector
 
 ## Complex State
 
@@ -55,12 +67,12 @@ The set of all state vectors whose elements enumerate each `°component:aspect` 
 
 ```
 {
-  [ °a:^a1, °b:^b1, °c:^c1, ... ],
-  [ °a:^a2, °b:^b1, °c:^c1, ... ],
-  [ °a:^a3, °b:^b1, °c:^c1, ... ],
-  [ °a:^a1, °b:^b2, °c:^c1, ... ],
-  [ °a:^a2, °b:^b2, °c:^c1, ... ],
-  [ °a:^a3, °b:^b2, °c:^c1, ... ],
+  [ °a::a1, °b::b1, °c::c1, ... ],
+  [ °a::a2, °b::b1, °c::c1, ... ],
+  [ °a::a3, °b::b1, °c::c1, ... ],
+  [ °a::a1, °b::b2, °c::c1, ... ],
+  [ °a::a2, °b::b2, °c::c1, ... ],
+  [ °a::a3, °b::b2, °c::c1, ... ],
   ...
   }
 ```
@@ -106,7 +118,7 @@ by inserting multiple transitions:
 
 ```
 °plug:loose ∨ °powerbutton:released   ⇒ °powerlight:off
-=⇒
+                        ⬌
 °plug:loose                           ⇒ °powerlight:off
 °powerbutton:released                 ⇒ °powerlight:off
 ```
@@ -236,7 +248,7 @@ the events first cause a state change: `°a^b ⇒ °c:d; °u^v ⇒ °w:x;`, and 
 combine can a consequence happen: `°c:d ∧ °w:x ⇒ ...`. So `°switch^activate ∧ °plug^insert` can *never*
 be fulfilled; this will, therefore, be ruled out by a higher-order regulation to ensure that
 
-* **a phrase may only contain at most one event**.
+* **a phrase may only contain at most one event.**
 
 Instead, a more circumlocutionary suite like
 
