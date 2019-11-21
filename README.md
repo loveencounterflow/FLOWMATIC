@@ -42,65 +42,48 @@ model complex state as sets of facets, eg.:
 from keys with various possible aspects follows a number of namespaced states:
 
 ```
-  °powerbutton: { pressed, released, } =>
+  °powerbutton: { pressed, released, } ⇒
     { °powerbutton:pressed, °powerbutton:released, }
 ```
 
-The powerset of all namespaced states lists all states that the model could
-in theory be in; of these, some, like
+The powerset of all namespaced states lists all states that the model could in theory be in; of these, some,
+like `°mains:disconnected ∧ °magnetron:on` will be physically impossible, so should be logically excluded
+from the states; others, such as `°door:open ∧ °magnetron:on` may be undesirable but possible. Of course, a
+microwave oven that is running with open doors is clearly broken, so there may be a point in introducing a
+rule like `°door:open ∧ °magnetron:on ⇒ °oven:broken`.
 
-```
-  °mains:disconnected and °cooking:true
-```
-
-will be physically impossible, so should be
-logically excluded from the states; others, such as
-
-```
-  °door:open and °cooking:true
-```
-
-are undesirable but, crucially, physically possible, and must likewise
-be logically excluded.
-
-States are views as key/value pairs, where the key identifies a *component*
-of the physical machine, and the value encodes the position that component
-is in or the action that the component is performing.
-
-Observe states may be (quasi-) continuous, such as `°temparature:51C` or
-`°thermostatdial:60C`; in such cases, a comparator `°temparature < °thermostatdial`
-or `°temparature > °thermostatdial` can be used to decided whether to heat, to switch off
-heating, to cool, or to switch off cooling, as the case may be.
-
-Keys may also represent ongoing actions such as `°cooking:{ongoing,stopped,interrupted}`.
+States are `°component:aspect` pairs. The `°component` identifies a material or abstract part of a real or
+imaginary machine; the `:aspect`—in its simplest form a binary tag—encodes the position that part is in or
+the activity that the component is performing. Static aspects and dynamic aspects ('activities') are not
+formally separated.
 
 ## Conjunctions and Disjunctions
 
 State vectors can be linked via boolean logic:
 
 ```
-°door:closed    ∧   °door^open              =>  °door:open
-°door:open      ∧   °door^open              =>  °door:open
-°door:open      ∧   °plug^insert            =>  °door:open
-°magnetron:on   ∧   °door^open              =>  °magnetron:off
-°plug:loose     ∨   °powerbutton:released   =>  °powerlight:off
-°door^open                                  =>  °magnetron:off
+°door:closed    ∧   °door^open              ⇒  °door:open
+°door:open      ∧   °door^open              ⇒  °door:open
+°door:open      ∧   °plug^insert            ⇒  °door:open
+°magnetron:on   ∧   °door^open              ⇒  °magnetron:off
+°plug:loose     ∨   °powerbutton:released   ⇒  °powerlight:off
+°door^open                                  ⇒  °magnetron:off
 ```
 
 The disjunction (`∨` or `or` operator or 'union') we can safely discard with as it is easily representable
 by inserting multiple transitions:
 
 ```
-°plug:loose ∨ °powerbutton:released   => °powerlight:off
-==>
-°plug:loose                           => °powerlight:off
-°powerbutton:released                 => °powerlight:off
+°plug:loose ∨ °powerbutton:released   ⇒ °powerlight:off
+=⇒
+°plug:loose                           ⇒ °powerlight:off
+°powerbutton:released                 ⇒ °powerlight:off
 ```
 
 However, conjunctions (`∧` or `and` operator or 'intersection') must still be explicitly expressed:
 
 ```
-°plug:inserted ∧ °powerbutton:pressed  =>  °powerlight:on
+°plug:inserted ∧ °powerbutton:pressed  ⇒  °powerlight:on
 ```
 
 There are two ways to capture this in (Postgre)SQL: either with arrays of values, or by grouping clauses by
@@ -110,12 +93,12 @@ assertion/negation, here called `pred` (for 'predicate'):
 ```
                   'condition'               'consequence'
                   'if'                      'then'
-term        pred    source_item           =>  target_item
+term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:20     T       °plug:inserted        =>  °powerlight:on
-term:20     T       °powerbutton:pressed  =>  °powerlight:on
-term:50     T       °plug:loose           =>  °powerlight:off
-term:51     T       °powerbutton:released =>  °powerlight:off
+term:20     T       °plug:inserted        ⇒  °powerlight:on
+term:20     T       °powerbutton:pressed  ⇒  °powerlight:on
+term:50     T       °plug:loose           ⇒  °powerlight:off
+term:51     T       °powerbutton:released ⇒  °powerlight:off
 ```
 
 It can be readily seen that in the above table
@@ -132,15 +115,15 @@ of) conditions (and optional intermediaries) to consequences**. In the below tab
 `term:99` to show that **phrases may overlap in their consequences**; this is the effect of disjunctions:
 
 ```
-( a ) ∨ ( b ∧ c ) => d => ( e ∧ f )
+( a ) ∨ ( b ∧ c ) ⇒ d ⇒ ( e ∧ f )
 ```
 
 holds when
 
 ```
-( (   a   ) => d => ( e ∧ f ) )
+( (   a   ) ⇒ d ⇒ ( e ∧ f ) )
 ∨
-( ( b ∧ c ) => d => ( e ∧ f ) )
+( ( b ∧ c ) ⇒ d ⇒ ( e ∧ f ) )
 ```
 
 holds.
@@ -153,19 +136,19 @@ followed, one that, despite appearances, has multiple consequences (namely, both
 ```
                     'condition'               'consequence'
                     'if'                      'then'
-term        pred    source_item           =>  target_item
+term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:99     T       °foo^bar              =>  term:21
+term:99     T       °foo^bar              ⇒  term:21
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:20     T       °plug:inserted        =>  term:21
-term:20     T       °powerbutton:pressed  =>  term:21
-term:21     T       °powerlight^on        =>  term:22
+term:20     T       °plug:inserted        ⇒  term:21
+term:20     T       °powerbutton:pressed  ⇒  term:21
+term:21     T       °powerlight^on        ⇒  term:22
 term:22     T       °bell^chime               ∎
 term:22     T       °powerlight:on            ∎
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:50     T       °plug:loose           =>  term:52
-term:51     T       °powerbutton:released =>  term:52
-term:52     T       °powerlight^off       =>  term:53
+term:50     T       °plug:loose           ⇒  term:52
+term:51     T       °powerbutton:released ⇒  term:52
+term:52     T       °powerlight^off       ⇒  term:53
 term:53     T       °powerlight:off           ∎
 ```
 
@@ -181,23 +164,23 @@ whereas `°powerlight^on` and `^off` are like **private members** in that they c
 outside of the automaton:
 
 ```
-term        pred    source_item           =>  target_item
+term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:10     T       °powerbutton^actuate  =>  term:11
-term:10     T       °powerbutton:released =>  term:11
+term:10     T       °powerbutton^actuate  ⇒  term:11
+term:10     T       °powerbutton:released ⇒  term:11
 term:11     T       °powerbutton:pressed      ∎
-term:12     T       °powerbutton^actuate  =>  term:14
-term:12     T       °powerbutton:pressed  =>  term:14
+term:12     T       °powerbutton^actuate  ⇒  term:14
+term:12     T       °powerbutton:pressed  ⇒  term:14
 term:14     T       °powerbutton:released     ∎
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:20     T       °plug:inserted        =>  term:21
-term:20     T       °powerbutton:pressed  =>  term:21
-term:21     T       °powerlight^on        =>  term:22
+term:20     T       °plug:inserted        ⇒  term:21
+term:20     T       °powerbutton:pressed  ⇒  term:21
+term:21     T       °powerlight^on        ⇒  term:22
 term:22     T       °bell^chime               ∎
 term:22     T       °powerlight:on            ∎
 ```
 
-There's yet another problem apparent: in the chain `°plug:inserted ∧ °powerbutton:pressed =>
+There's yet another problem apparent: in the chain `°plug:inserted ∧ °powerbutton:pressed ⇒
 °powerlight^on ∧ °bell^chime`, no mention of time or rising vs. falling flanks is made; therefore, if we
 interpreted the phrase as being *timeless*, then the `°bell` should be `^chime`ing all the time. This is
 probably not what the customer wants, an oven that rings all the time when being in use.
@@ -216,9 +199,9 @@ Since we want the automaton to only process a single event in each cycle, that a
 
 * **there are no truly simultaneous events: each event comes before or after any other, if any**
 
-meaning that in order to model conjunctions of events: `°a^b ∧ °u^v => ...`, we have to do so by having
-the events first cause a state change: `°a^b => °c:d; °u^v => °w:x;`, and only when those partial states do
-combine can a consequence happen: `°c:d ∧ °w:x => ...`. So `°switch^activate ∧ °plug^insert` can *never*
+meaning that in order to model conjunctions of events: `°a^b ∧ °u^v ⇒ ...`, we have to do so by having
+the events first cause a state change: `°a^b ⇒ °c:d; °u^v ⇒ °w:x;`, and only when those partial states do
+combine can a consequence happen: `°c:d ∧ °w:x ⇒ ...`. So `°switch^activate ∧ °plug^insert` can *never*
 be fulfilled; this will, therefore, be ruled out by a higher-order regulation to ensure that
 
 * **a phrase may only contain at most one event**.
@@ -226,33 +209,38 @@ be fulfilled; this will, therefore, be ruled out by a higher-order regulation to
 Instead, a more circumlocutionary suite like
 
 ```
-°switch^activate                        =>  °switch:activated;
-°plug^insert                            =>  °plug:inserted;
-°switch:activated ∧ °plug:inserted      =>  °device^start`
+°switch^activate                        ⇒  °switch:activated;
+°plug^insert                            ⇒  °plug:inserted;
+°switch:activated ∧ °plug:inserted      ⇒  °device^start`
 ```
 
 must be used.
 
 ```
-term        pred    source_item           =>  target_item
+term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:10     T       °powerbutton^actuate  =>  term:11
-term:10     T       °powerbutton:released =>  term:11
+term:10     T       °powerbutton^actuate  ⇒  term:11
+term:10     T       °powerbutton:released ⇒  term:11
 term:11     T       °powerbutton^press        ∎
 term:11     T       °powerbutton:pressed      ∎
-term:12     T       °powerbutton^actuate  =>  term:14
-term:13     T       °powerbutton:pressed  =>  term:14
+term:12     T       °powerbutton^actuate  ⇒  term:14
+term:13     T       °powerbutton:pressed  ⇒  term:14
 term:14     T       °powerbutton:released     ∎
 term:14     T       °powerbutton^release      ∎
 ——————————— ——————— ————————————————————— ——— ———————————————————
-term:20     T       °plug:inserted        =>  term:21
-term:20     T       °powerbutton^press    =>  term:21
-term:21     T       °powerlight^on        =>  term:22
+term:20     T       °plug:inserted        ⇒  term:21
+term:20     T       °powerbutton^press    ⇒  term:21
+term:21     T       °powerlight^on        ⇒  term:22
 term:22     T       °bell^chime               ∎
 term:22     T       °powerlight:on            ∎
 ```
 
 ## Continuous Values
+
+States may be (quasi-) continuous, such as `°temparature:51C` or `°thermostatdial:60C`; in such cases, a
+comparator `°temparature < °thermostatdial` or `°temparature > °thermostatdial` can be used to decide
+whether to heat, to switch off heating, to cool, or to switch off cooling, as the case may be.
+
 
 ## Comparisons
 
@@ -295,7 +283,7 @@ term:22     T       °powerlight:on            ∎
 ```
 
 ```
-°door:closed °plug:inserted °cooking:ongoing °button^release  => °button:released °cooking:stopped
+°door:closed °plug:inserted °cooking:ongoing °button^release  ⇒ °button:released °cooking:stopped
 ```
 
 ## Sigils
