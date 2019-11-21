@@ -1,6 +1,28 @@
 
 # FlowMatic
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [FlowMatic](#flowmatic)
+  - [Complex State](#complex-state)
+  - [Conjunctions and Disjunctions](#conjunctions-and-disjunctions)
+  - [Continuous Values](#continuous-values)
+  - [Comparisons](#comparisons)
+  - [If / Then / Else Conditions](#if--then--else-conditions)
+  - [Loops](#loops)
+  - [Composability](#composability)
+  - [Turing Completeness](#turing-completeness)
+  - [XXX](#xxx)
+  - [Sigils](#sigils)
+- [The FlowMatic Finite Automaton](#the-flowmatic-finite-automaton)
+  - [Symbolic and Built-In States](#symbolic-and-built-in-states)
+  - [Symbolic and Built-In Acts](#symbolic-and-built-in-acts)
+  - [Constraints on Transitions Table](#constraints-on-transitions-table)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 <!-- https://github.com/davidmoten/state-machine -->
 
