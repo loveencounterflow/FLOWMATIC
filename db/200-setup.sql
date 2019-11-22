@@ -49,23 +49,6 @@ create table X.atoms (
     comment   X.nonempty_text,
   primary key ( atom ) );
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into X.kinds ( kind, sigil, comment ) values
-  ( 'component',  '°',  'models interacting parts of the system'            ),
-  ( 'verb',       '^',  'models what parts of the system can do'            ),
-  ( 'aspect',     ':',  'models malleable phases of components'             ),
-  ( 'event',      '°^', 'models ex- and internal actuations of the system'  ),
-  ( 'state',      '°:', 'models static and dynamic postures of the system'  );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into X.atoms ( atom, kind, comment ) values
-  ( '°FSM',       'component',  'pseudo-component for the automaton itself' ),
-  ( ':IDLE',      'aspect',     'when the automaton is not in use'          ),
-  ( ':ACTIVE',    'aspect',     'when the automaton is in use'              ),
-  ( '^RESET',     'verb',       'put the automaton in its initial state'    );
-
 
 -- =========================================================================================================
 --
@@ -86,13 +69,6 @@ create table X.pairs (
 );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into X.pairs ( topic, focus, kind, dflt, comment ) values
-  ( '°FSM',     ':IDLE',      'state',  true,    'the automaton is not in use'                ),
-  ( '°FSM',     ':ACTIVE',    'state',  false,   'the automaton is in use'                    ),
-  ( '°FSM',     '^RESET',     'event',  false,   'reset the automaton to its initial state'   );
-
--- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
 create table X.transitions (
     id                bigint generated always as identity primary key,
@@ -104,13 +80,9 @@ create table X.transitions (
   unique ( id, termid, topic, focus, predicate, action ),
   foreign key ( topic, focus ) references X.pairs );
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 10 }———:reset
-insert into X.transitions ( termid, topic, focus, action ) values
-  ( 1, '°FSM',  ':IDLE',    2     ),
-  ( 1, '°FSM',  '^RESET',   2     ),
-  ( 2, '°FSM',  ':ACTIVE',  null  );
 
+-- =========================================================================================================
+--
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset
 -- TAINT add constraint to ensure only events, not other pair kinds, are entered
@@ -132,6 +104,38 @@ create table X.statelog (
   foreign key ( topic, focus ) references X.pairs ( topic, focus ) );
 
 
+-- =========================================================================================================
+-- INITIAL DATA
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+insert into X.kinds ( kind, sigil, comment ) values
+  ( 'component',  '°',  'models interacting parts of the system'            ),
+  ( 'verb',       '^',  'models what parts of the system can do'            ),
+  ( 'aspect',     ':',  'models malleable phases of components'             ),
+  ( 'event',      '°^', 'models ex- and internal actuations of the system'  ),
+  ( 'state',      '°:', 'models static and dynamic postures of the system'  );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+insert into X.atoms ( atom, kind, comment ) values
+  ( '°FSM',       'component',  'pseudo-component for the automaton itself' ),
+  ( ':IDLE',      'aspect',     'when the automaton is not in use'          ),
+  ( ':ACTIVE',    'aspect',     'when the automaton is in use'              ),
+  ( '^RESET',     'verb',       'put the automaton in its initial state'    );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 6 }———:reset
+insert into X.pairs ( topic, focus, kind, dflt, comment ) values
+  ( '°FSM',     ':IDLE',      'state',  true,    'the automaton is not in use'                ),
+  ( '°FSM',     ':ACTIVE',    'state',  false,   'the automaton is in use'                    ),
+  ( '°FSM',     '^RESET',     'event',  false,   'reset the automaton to its initial state'   );
+
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 10 }———:reset
+insert into X.transitions ( termid, topic, focus, action ) values
+  ( 1, '°FSM',  ':IDLE',    2     ),
+  ( 1, '°FSM',  '^RESET',   2     ),
+  ( 2, '°FSM',  ':ACTIVE',  null  );
 
 
 /* ###################################################################################################### */
