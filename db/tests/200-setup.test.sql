@@ -19,7 +19,7 @@ drop schema if exists X cascade;
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 2 }———:reset
--- insert into X.atoms ( atom, kind, comment ) values
+-- insert into FM.atoms ( atom, kind, comment ) values
 --   ( '°heatinglight',  'component',  'light to indicate oven is heating'       ),
 --   ( '°powerlight',    'component',  'light to indicate oven is switched on'   ),
 --   ( '°mainswitch',    'component',  'button to switch microwave on and off'   ),
@@ -32,7 +32,7 @@ drop schema if exists X cascade;
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 5 }———:reset
--- insert into X.pairs ( topic, focus, kind, dflt, comment ) values
+-- insert into FM.pairs ( topic, focus, kind, dflt, comment ) values
 --   ( '°mainswitch',  ':pressed',   'state',  false,  'the power button is in ''on'' position'    ),
 --   ( '°mainswitch',  ':released',  'state',  true,   'the power button is in ''off'' position'   ),
 --   ( '°powerlight',  ':on',        'state',  false,  'the power light is bright'                 ),
@@ -42,7 +42,7 @@ drop schema if exists X cascade;
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 7 }———:reset
--- insert into X.transitions ( termid, topic, focus, action ) values
+-- insert into FM.transitions ( termid, topic, focus, action ) values
 --   -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
 --   ( 3,  '°mainswitch',    ':released',  4     ),
 --   ( 3,  '°mainswitch',    '^press',     4     ),
@@ -59,7 +59,7 @@ drop schema if exists X cascade;
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 8 }———:reset
--- insert into X.eventlog ( component, verb ) values
+-- insert into FM.eventlog ( component, verb ) values
 --   ( '°FSM',         '^RESET'    ),
 --   -- ( '°FSM',         '^START'    ),
 --   ( '°mainswitch',  '^press'    ),
@@ -68,47 +68,47 @@ drop schema if exists X cascade;
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
 -- .........................................................................................................
-\echo :reverse:steel X.kinds            :reset
-select * from X.kinds;
+\echo :reverse:steel FM.kinds            :reset
+select * from FM.kinds;
 -- .........................................................................................................
-\echo :reverse:steel X.atoms            :reset
-select * from X.atoms;
+\echo :reverse:steel FM.atoms            :reset
+select * from FM.atoms;
 -- .........................................................................................................
-\echo :reverse:steel X.pairs            :reset
-select * from X.pairs;
+\echo :reverse:steel FM.pairs            :reset
+select * from FM.pairs;
 -- .........................................................................................................
-\echo :reverse:plum X.transition_terms      :reset
-select * from X.transition_terms;
+\echo :reverse:plum FM.transition_terms      :reset
+select * from FM.transition_terms;
 -- .........................................................................................................
-\echo :reverse:plum X.transition_clauses      :reset
-select * from X.transition_clauses;
+\echo :reverse:plum FM.transition_clauses      :reset
+select * from FM.transition_clauses;
 -- .........................................................................................................
-\echo :reverse:plum X.transition_clauses_and_phrases      :reset
-select * from X.transition_clauses_and_phrases;
+\echo :reverse:plum FM.transition_clauses_and_phrases      :reset
+select * from FM.transition_clauses_and_phrases;
 -- -- .........................................................................................................
--- \echo :reverse:plum X.transition_termids_and_clausids      :reset
--- select * from X.transition_termids_and_clausids;
+-- \echo :reverse:plum FM.transition_termids_and_clausids      :reset
+-- select * from FM.transition_termids_and_clausids;
 -- -- .........................................................................................................
--- \echo :reverse:plum X.transition_clausids      :reset
--- select * from X.transition_clausids;
+-- \echo :reverse:plum FM.transition_clausids      :reset
+-- select * from FM.transition_clausids;
 -- .........................................................................................................
-\echo :reverse:plum X.transition_phrasids      :reset
-select * from X.transition_phrasids;
+\echo :reverse:plum FM.transition_phrasids      :reset
+select * from FM.transition_phrasids;
 -- .........................................................................................................
-\echo :reverse:plum X.transition_phrases      :reset
-select * from X.transition_phrases;
+\echo :reverse:plum FM.transition_phrases      :reset
+select * from FM.transition_phrases;
 -- -- .........................................................................................................
--- \echo :reverse:plum X.transition_premises      :reset
--- select * from X.transition_premises;
+-- \echo :reverse:plum FM.transition_premises      :reset
+-- select * from FM.transition_premises;
 -- -- .........................................................................................................
--- \echo :reverse:plum X.transition_actions      :reset
--- select * from X.transition_actions;
+-- \echo :reverse:plum FM.transition_actions      :reset
+-- select * from FM.transition_actions;
 -- -- .........................................................................................................
--- \echo :reverse:yellow X.eventlog        :reset
--- select * from X.eventlog;
+-- \echo :reverse:yellow FM.eventlog        :reset
+-- select * from FM.eventlog;
 -- -- .........................................................................................................
--- \echo :reverse:yellow X.statelog        :reset
--- select * from X.statelog;
+-- \echo :reverse:yellow FM.statelog        :reset
+-- select * from FM.statelog;
 
 
 
