@@ -17,45 +17,45 @@ drop schema if exists X cascade;
 \set filename 200-setup.test.sql
 \pset pager on
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 2 }———:reset
-insert into X.atoms ( atom, kind, comment ) values
-  ( '°heatinglight',  'component',  'light to indicate oven is heating'       ),
-  ( '°powerlight',    'component',  'light to indicate oven is switched on'   ),
-  ( '°mainswitch',    'component',  'button to switch microwave on and off'   ),
-  ( ':pressed',       'aspect',     'when a button is in ''on'' position'     ),
-  ( ':released',      'aspect',     'when a button is in ''off'' position'    ),
-  ( ':on',            'aspect',     'something is active'                     ),
-  ( ':off',           'aspect',     'something is inactive'                   ),
-  ( '^press',         'verb',       'press a button'                          ),
-  ( '^release',       'verb',       'release a button'                        );
+-- -- ---------------------------------------------------------------------------------------------------------
+-- \echo :signal ———{ :filename 2 }———:reset
+-- insert into X.atoms ( atom, kind, comment ) values
+--   ( '°heatinglight',  'component',  'light to indicate oven is heating'       ),
+--   ( '°powerlight',    'component',  'light to indicate oven is switched on'   ),
+--   ( '°mainswitch',    'component',  'button to switch microwave on and off'   ),
+--   ( ':pressed',       'aspect',     'when a button is in ''on'' position'     ),
+--   ( ':released',      'aspect',     'when a button is in ''off'' position'    ),
+--   ( ':on',            'aspect',     'something is active'                     ),
+--   ( ':off',           'aspect',     'something is inactive'                   ),
+--   ( '^press',         'verb',       'press a button'                          ),
+--   ( '^release',       'verb',       'release a button'                        );
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 5 }———:reset
-insert into X.pairs ( topic, focus, kind, dflt, comment ) values
-  ( '°mainswitch',  ':pressed',   'state',  false,  'the power button is in ''on'' position'    ),
-  ( '°mainswitch',  ':released',  'state',  true,   'the power button is in ''off'' position'   ),
-  ( '°powerlight',  ':on',        'state',  false,  'the power light is bright'                 ),
-  ( '°powerlight',  ':off',       'state',  true,   'the power light is dark'                   ),
-  ( '°mainswitch',  '^press',     'event',  false,  'press the power button'                    ),
-  ( '°mainswitch',  '^release',   'event',  false,  'release the power button'                  );
+-- -- ---------------------------------------------------------------------------------------------------------
+-- \echo :signal ———{ :filename 5 }———:reset
+-- insert into X.pairs ( topic, focus, kind, dflt, comment ) values
+--   ( '°mainswitch',  ':pressed',   'state',  false,  'the power button is in ''on'' position'    ),
+--   ( '°mainswitch',  ':released',  'state',  true,   'the power button is in ''off'' position'   ),
+--   ( '°powerlight',  ':on',        'state',  false,  'the power light is bright'                 ),
+--   ( '°powerlight',  ':off',       'state',  true,   'the power light is dark'                   ),
+--   ( '°mainswitch',  '^press',     'event',  false,  'press the power button'                    ),
+--   ( '°mainswitch',  '^release',   'event',  false,  'release the power button'                  );
 
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 7 }———:reset
-insert into X.transitions ( termid, topic, focus, action ) values
-  -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
-  ( 3,  '°mainswitch',    ':released',  4     ),
-  ( 3,  '°mainswitch',    '^press',     4     ),
-  ( 4,  '°mainswitch',    ':pressed',   null  ),
-  ( 5,  '°mainswitch',    ':pressed',   6     ),
-  ( 5,  '°mainswitch',    '^release',   6     ),
-  ( 6,  '°mainswitch',    ':released',  null  ),
-  ( 7,  '°powerlight',    ':off',       8     ),
-  ( 7,  '°mainswitch',    '^press',     8     ),
-  ( 8,  '°powerlight',    ':on',        null  ),
-  ( 9,  '°powerlight',    ':on',        10    ),
-  ( 9,  '°mainswitch',    '^release',   10    ),
-  ( 10, '°powerlight',    ':off',       null  );
+-- -- ---------------------------------------------------------------------------------------------------------
+-- \echo :signal ———{ :filename 7 }———:reset
+-- insert into X.transitions ( termid, topic, focus, action ) values
+--   -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
+--   ( 3,  '°mainswitch',    ':released',  4     ),
+--   ( 3,  '°mainswitch',    '^press',     4     ),
+--   ( 4,  '°mainswitch',    ':pressed',   null  ),
+--   ( 5,  '°mainswitch',    ':pressed',   6     ),
+--   ( 5,  '°mainswitch',    '^release',   6     ),
+--   ( 6,  '°mainswitch',    ':released',  null  ),
+--   ( 7,  '°powerlight',    ':off',       8     ),
+--   ( 7,  '°mainswitch',    '^press',     8     ),
+--   ( 8,  '°powerlight',    ':on',        null  ),
+--   ( 9,  '°powerlight',    ':on',        10    ),
+--   ( 9,  '°mainswitch',    '^release',   10    ),
+--   ( 10, '°powerlight',    ':off',       null  );
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 8 }———:reset
@@ -77,14 +77,39 @@ select * from X.atoms;
 \echo :reverse:steel X.pairs            :reset
 select * from X.pairs;
 -- .........................................................................................................
-\echo :reverse:plum X.transitions      :reset
-select * from X.transitions;
+\echo :reverse:plum X.transition_terms      :reset
+select * from X.transition_terms;
 -- .........................................................................................................
-\echo :reverse:yellow X.eventlog        :reset
-select * from X.eventlog;
+\echo :reverse:plum X.transition_clauses      :reset
+select * from X.transition_clauses;
 -- .........................................................................................................
-\echo :reverse:yellow X.statelog        :reset
-select * from X.statelog;
+\echo :reverse:plum X.transition_clauses_and_phrases      :reset
+select * from X.transition_clauses_and_phrases;
+-- -- .........................................................................................................
+-- \echo :reverse:plum X.transition_termids_and_clausids      :reset
+-- select * from X.transition_termids_and_clausids;
+-- -- .........................................................................................................
+-- \echo :reverse:plum X.transition_clausids      :reset
+-- select * from X.transition_clausids;
+-- .........................................................................................................
+\echo :reverse:plum X.transition_phrasids      :reset
+select * from X.transition_phrasids;
+-- .........................................................................................................
+\echo :reverse:plum X.transition_phrases      :reset
+select * from X.transition_phrases;
+-- -- .........................................................................................................
+-- \echo :reverse:plum X.transition_premises      :reset
+-- select * from X.transition_premises;
+-- -- .........................................................................................................
+-- \echo :reverse:plum X.transition_actions      :reset
+-- select * from X.transition_actions;
+-- -- .........................................................................................................
+-- \echo :reverse:yellow X.eventlog        :reset
+-- select * from X.eventlog;
+-- -- .........................................................................................................
+-- \echo :reverse:yellow X.statelog        :reset
+-- select * from X.statelog;
+
 
 
 /* ###################################################################################################### */
