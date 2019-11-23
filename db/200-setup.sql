@@ -44,7 +44,7 @@ create table FM.kinds (
 \echo :signal ———{ :filename 6 }———:reset
 -- ### TAINT add check that sigil matches kind
 create table FM.atoms (
-    atom      FM.atom_name       not null  unique,
+    atom      FM.atom_name      not null  unique,
     kind      text              not null  references FM.kinds ( kind ),
     comment   FM.nonempty_text,
   primary key ( atom ) );
@@ -58,11 +58,10 @@ create table FM.atoms (
 -- ### TAINT add constraint to check that exactly one state has dflt = true
 -- ### TAINT add constraint to check that all events have dflt = false (or null)
 create table FM.pairs (
-    topic       FM.topic_name      not null  references FM.atoms ( atom ),
-    focus       FM.focus_name      not null  references FM.atoms ( atom ),
-    predicate   jsonb             not null  default 'true'::jsonb,
-    kind        text              not null  references FM.kinds ( kind ),
-    dflt        boolean           not null  default false,
+    topic       FM.topic_name   not null  references FM.atoms ( atom ),
+    focus       FM.focus_name   not null  references FM.atoms ( atom ),
+    kind        text            not null  references FM.kinds ( kind ),
+    dflt        boolean         not null  default false,
     comment     FM.nonempty_text,
   primary key ( topic, focus )
   -- constraint on ( topic ) check
@@ -175,6 +174,37 @@ create view FM.transition_clauses_and_phrases as ( select
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
+create function FM.add_atom( ¶atom FM.atom_name, ¶kind text, ¶comment text )
+  -- ### TAINT should check that kind and sigil match
+  returns boolean volatile language plpgsql as $$
+  begin
+    insert into FM.atoms ( atom, kind, comment ) values
+      ( ¶atom, ¶kind, ¶comment );
+    return found;
+  end; $$;
+
+comment on function FM.add_atom( FM.atom_name, text, text ) is 'Given a name, and an optional comment,
+register the atom with table `FM.atoms`. In case the atom has already been registered, an error will
+be thrown.';
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM.add_pair(
+  ¶topic FM.topic_name, ¶focus FM.focus_name, ¶kind text, ¶dflt boolean, ¶comment text )
+  -- ### TAINT consider to split into two functions to add states, actions
+  -- ### TAINT should check that kind and sigil match
+  returns boolean volatile language plpgsql as $$
+  begin
+    insert into FM.pairs ( topic, focus, kind, dflt, comment ) values
+      ( ¶topic, ¶focus, ¶kind, ¶dflt, ¶comment );
+    return found;
+  end; $$;
+
+comment on function FM.add_pair( FM.topic_name, FM.focus_name, text, boolean, text ) is 'Given a topic, a
+focus, a kind, a default flag (indicating whether the new state is a default state), and an optional
+comment, register the pair with table `FM.pairs`. In case the atom has already been registered, an error
+will be thrown.';
+
+-- ---------------------------------------------------------------------------------------------------------
 create function FM.add_transition_term( ¶topic FM.topic_name, ¶focus FM.focus_name, ¶predicate jsonb )
   returns bigint volatile language plpgsql as $$
   declare
@@ -189,7 +219,10 @@ create function FM.add_transition_term( ¶topic FM.topic_name, ¶focus FM.focus_
     return R;
   end; $$;
 
--- comment on function
+comment on function FM.add_transition_term( FM.topic_name, FM.focus_name, jsonb ) is 'Given a topic, a focus
+and a predicate, make sure the triplet is registered in table `FM.transition_terms` and return its
+`termid`.';
+
 -- -- ---------------------------------------------------------------------------------------------------------
 -- create function FM.add_transition( ¶cond_topic text, ¶cond_focus text, ¶actn_topic text, ¶actn_focus text )
 --   returns void volatile language plpgsql as $$
@@ -208,30 +241,25 @@ insert into FM.kinds ( kind, sigil, comment ) values
   ( 'state',      '°:', 'models static and dynamic postures of the system'  );
 
 -- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into FM.atoms ( atom, kind, comment ) values
-  ( '°FSM',       'component',  'pseudo-component for the automaton itself' ),
-  ( ':IDLE',      'aspect',     'when the automaton is not in use'          ),
-  ( ':ACTIVE',    'aspect',     'when the automaton is in use'              ),
-  ( '^RESET',     'verb',       'put the automaton in its initial state'    ),
-  ( '^START',     'verb',       'start the automaton'                       );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into FM.pairs ( topic, focus, kind, dflt, comment ) values
-  ( '°FSM',     ':IDLE',      'state',  true,    'the automaton is not in use'                ),
-  ( '°FSM',     ':ACTIVE',    'state',  false,   'the automaton is in use'                    ),
-  ( '°FSM',     '^RESET',     'event',  false,   'reset the automaton to its initial state'   ),
-  ( '°FSM',     '^START',     'event',  false,   'start the automaton'                        );
-
--- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset
 do $$ begin
+  perform FM.add_atom( '°FSM',       'component',  'pseudo-component for the automaton itself' );
+  perform FM.add_atom( ':IDLE',      'aspect',     'when the automaton is not in use'          );
+  perform FM.add_atom( ':ACTIVE',    'aspect',     'when the automaton is in use'              );
+  perform FM.add_atom( '^RESET',     'verb',       'put the automaton in its initial state'    );
+  perform FM.add_atom( '^START',     'verb',       'start the automaton'                       );
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_pair(  '°FSM', ':IDLE',    'state',  true,   'the automaton is not in use'               );
+  perform FM.add_pair(  '°FSM', ':ACTIVE',  'state',  false,  'the automaton is in use'                   );
+  perform FM.add_pair(  '°FSM', '^RESET',   'event',  false,  'reset the automaton to its initial state'  );
+  perform FM.add_pair(  '°FSM', '^START',   'event',  false,  'start the automaton'                       );
+  -- -------------------------------------------------------------------------------------------------------
   perform FM.add_transition_term(  '°FSM',   ':IDLE',    'true'  );
   perform FM.add_transition_term(  '°FSM',   '^RESET',   'true'  );
   perform FM.add_transition_term(  '°FSM',   ':ACTIVE',  'true'  );
   perform FM.add_transition_term(  '°FSM',   '^START',   'true'  );
   end; $$;
+
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset

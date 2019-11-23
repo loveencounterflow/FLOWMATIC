@@ -67,6 +67,8 @@ drop schema if exists X cascade;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
+
+
 -- .........................................................................................................
 \echo :reverse:steel FM.kinds            :reset
 select * from FM.kinds;
@@ -77,38 +79,26 @@ select * from FM.atoms;
 \echo :reverse:steel FM.pairs            :reset
 select * from FM.pairs;
 -- .........................................................................................................
-\echo :reverse:plum FM.transition_terms      :reset
+\echo :reverse:steel FM.transition_terms            :reset
 select * from FM.transition_terms;
 -- .........................................................................................................
-\echo :reverse:plum FM.transition_clauses      :reset
-select * from FM.transition_clauses;
+\echo :reverse:steel FM.transition_clausids            :reset
+select * from FM.transition_clausids;
 -- .........................................................................................................
-\echo :reverse:plum FM.transition_clauses_and_phrases      :reset
-select * from FM.transition_clauses_and_phrases;
--- -- .........................................................................................................
--- \echo :reverse:plum FM.transition_termids_and_clausids      :reset
--- select * from FM.transition_termids_and_clausids;
--- -- .........................................................................................................
--- \echo :reverse:plum FM.transition_clausids      :reset
--- select * from FM.transition_clausids;
+\echo :reverse:steel FM.transition_termids_and_clausids            :reset
+select * from FM.transition_termids_and_clausids;
 -- .........................................................................................................
-\echo :reverse:plum FM.transition_phrasids      :reset
+\echo :reverse:steel FM.transition_phrasids            :reset
 select * from FM.transition_phrasids;
 -- .........................................................................................................
-\echo :reverse:plum FM.transition_phrases      :reset
+\echo :reverse:steel FM.transition_clauses            :reset
+select * from FM.transition_clauses;
+-- .........................................................................................................
+\echo :reverse:steel FM.transition_phrases            :reset
 select * from FM.transition_phrases;
--- -- .........................................................................................................
--- \echo :reverse:plum FM.transition_premises      :reset
--- select * from FM.transition_premises;
--- -- .........................................................................................................
--- \echo :reverse:plum FM.transition_actions      :reset
--- select * from FM.transition_actions;
--- -- .........................................................................................................
--- \echo :reverse:yellow FM.eventlog        :reset
--- select * from FM.eventlog;
--- -- .........................................................................................................
--- \echo :reverse:yellow FM.statelog        :reset
--- select * from FM.statelog;
+-- .........................................................................................................
+\echo :reverse:steel FM.transition_clauses_and_phrases            :reset
+select * from FM.transition_clauses_and_phrases;
 
 
 
