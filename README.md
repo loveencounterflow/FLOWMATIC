@@ -391,6 +391,11 @@ whether to heat, to switch off heating, to cool, or to switch off cooling, as th
     '°thermometer:temp%" 50°C < x "         => °indicator:color%red
     '°thermometer:temp%" 45°C < x < 50°C "  => °indicator:color%green
     '°thermometer:temp%" 45°C > x "         => °indicator:color%blue
+
+  basic form of negation:
+    '°box%not:open'
+    '°box:open%not'
+
 ```
 
 
