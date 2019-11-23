@@ -144,8 +144,8 @@ create function FM._get_transition_clause_kind( cond_phrasid bigint, csqt_phrasi
     case
       when cond_phrasid is      null and csqt_phrasid is      null  then  'orphan'
       when cond_phrasid is  not null and csqt_phrasid is  not null  then  'intermediate'
-      when cond_phrasid is  not null                                then  'condition'
-      else                                                                'action'
+      when cond_phrasid is  not null                                then  'cond'
+      else                                                                'csqt'
       end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
