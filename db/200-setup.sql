@@ -223,6 +223,7 @@ comment on function FM.add_transition_term( FM.topic_name, FM.focus_name, jsonb 
 and a predicate, make sure the triplet is registered in table `FM.transition_terms` and return its
 `termid`.';
 
+-- cond_topic │ cond_focus │ cond_predicate │ actn_topic │ actn_focus │ actn_predicate
 -- -- ---------------------------------------------------------------------------------------------------------
 -- create function FM.add_transition( ¶cond_topic text, ¶cond_focus text, ¶actn_topic text, ¶actn_focus text )
 --   returns void volatile language plpgsql as $$
@@ -243,6 +244,7 @@ insert into FM.kinds ( kind, sigil, comment ) values
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset
 do $$ begin
+  -- -------------------------------------------------------------------------------------------------------
   perform FM.add_atom( '°FSM',       'component',  'pseudo-component for the automaton itself' );
   perform FM.add_atom( ':IDLE',      'aspect',     'when the automaton is not in use'          );
   perform FM.add_atom( ':ACTIVE',    'aspect',     'when the automaton is in use'              );
