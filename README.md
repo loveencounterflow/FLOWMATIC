@@ -162,15 +162,13 @@ of) conditions (and optional intermediaries) to consequences**. In the below tab
 `term:99` to show that **phrases may overlap in their consequences**; this is the effect of disjunctions:
 
 ```
-( a ) ∨ ( b ∧ c ) ⇒ d ⇒ ( e ∧ f )
+( a ∨ b ) ⇒ d
 ```
 
 holds when
 
 ```
-( (   a   ) ⇒ d ⇒ ( e ∧ f ) )
-∨
-( ( b ∧ c ) ⇒ d ⇒ ( e ∧ f ) )
+( a ⇒ d ) ∨ ( b ⇒ d )
 ```
 
 holds.
@@ -282,6 +280,32 @@ term:21     T       °powerlight^on        ⇒  term:22
 term:22     T       °bell^chime               ∎
 term:22     T       °powerlight:on            ∎
 ```
+
+## Atoms, Pairs, Terms, Clauses and Phrases
+
+### Atoms: the Elementary Parts
+
+In FlowMatic, atoms represent the samlles parts that transition phrases are made of. They come in three
+flavors, namely **`°components`**, **`^verbs`**, and **`:aspects`**, here written with their respective
+discerning sigils.
+
+### Pairs: States and Actions
+
+Pairs are tuples of a **`°component`** and either a **`^verb`** (when it is known as an **action**) or else
+an **`:aspect`** (when it is known as an (elementary) **state**). Pairs are introduced into the system to
+make sure that only licensed combinations may appear in transition rules and events sent in from the
+outside. Pairs are customarily written with both parts running together as in `°bell^ring` or
+`°door:closed`.
+
+### Terms
+
+### Clauses
+
+### Phrases
+
+Phrases are **sequence of terms that lead from (conjunctions
+of) conditions to consequences**
+
 
 ## Continuous Values
 
