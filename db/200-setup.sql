@@ -12,42 +12,46 @@
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 1 }———:reset
 drop schema if exists FM cascade; create schema FM;
+drop schema if exists FM_TYPES cascade; create schema FM_TYPES;
 
 
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
-create domain FM.positive_integer as integer  check ( value > 0                   );
-create domain FM.nonempty_text    as text     check ( value ~ '.+'                );
-create domain FM.component        as text     check ( value ~ '^°.+'              );
-create domain FM.verb             as text     check ( value ~ '^\^.+'             );
-create domain FM.aspect           as text     check ( value ~ '^:.+'              );
-create domain FM.topic            as text     check ( value ~ '^°.+'              ); -- i.e., component
-create domain FM.focus            as text     check ( value ~ '^[:^].+'           ); -- i.e., verb or aspect
-create domain FM.atom             as text     check ( value ~ '^[°^:].+'          ); -- i.e., component, verb, or aspect
-create domain FM.sigil            as text     check ( value ~ '^[°^:]$'           );
-create domain FM.sigilcombo       as text     check ( value ~ '^([°^:])|(°[^:])$' );
+create domain FM_TYPES.positive_integer as integer  check ( value > 0                   );
+create domain FM_TYPES.nonempty_text    as text     check ( value ~ '.+'                );
+create domain FM_TYPES.component        as text     check ( value ~ '^°.+'              );
+create domain FM_TYPES.verb             as text     check ( value ~ '^\^.+'             );
+create domain FM_TYPES.aspect           as text     check ( value ~ '^:.+'              );
+create domain FM_TYPES.topic            as text     check ( value ~ '^°.+'              ); -- i.e., component
+create domain FM_TYPES.focus            as text     check ( value ~ '^[:^].+'           ); -- i.e., verb or aspect
+create domain FM_TYPES.atom             as text     check ( value ~ '^[°^:].+'          ); -- i.e., component, verb, or aspect
+create domain FM_TYPES.sigil            as text     check ( value ~ '^[°^:]$'           );
+create domain FM_TYPES.sigilcombo       as text     check ( value ~ '^([°^:])|(°[^:])$' );
 -- create domain FM.predicate        as jsonb    check ( true                        );
 
+create type FM_TYPES.state as (
+  component   FM_TYPES.component,
+  aspect      FM_TYPES.aspect );
 
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 6 }———:reset
 create table FM.kinds (
-    kind      FM.nonempty_text   not null  unique,
-    sigil     FM.sigilcombo      not null  unique,
-    comment   FM.nonempty_text,
+    kind      FM_TYPES.nonempty_text   not null  unique,
+    sigil     FM_TYPES.sigilcombo      not null  unique,
+    comment   FM_TYPES.nonempty_text,
   primary key ( kind ) );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 6 }———:reset
 -- ### TAINT add check that sigil matches kind
 create table FM.atoms (
-    atom      FM.atom           not null  unique,
-    kind      text              not null  references FM.kinds ( kind ),
-    comment   FM.nonempty_text,
+    atom      FM_TYPES.atom           not null  unique,
+    kind      text                    not null  references FM.kinds ( kind ),
+    comment   FM_TYPES.nonempty_text,
   primary key ( atom ) );
 
 
@@ -59,11 +63,11 @@ create table FM.atoms (
 -- ### TAINT add constraint to check that exactly one state has dflt = true
 -- ### TAINT add constraint to check that all events have dflt = false (or null)
 create table FM.pairs (
-    topic       FM.topic          not null  references FM.atoms ( atom ),
-    focus       FM.focus          not null  references FM.atoms ( atom ),
-    kind        text              not null  references FM.kinds ( kind ),
-    dflt        boolean           not null  default false,
-    comment     FM.nonempty_text,
+    topic       FM_TYPES.topic          not null  references FM.atoms ( atom ),
+    focus       FM_TYPES.focus          not null  references FM.atoms ( atom ),
+    kind        text                    not null  references FM.kinds ( kind ),
+    dflt        boolean                 not null  default false,
+    comment     FM_TYPES.nonempty_text,
   primary key ( topic, focus )
   -- constraint on ( topic ) check
   );
@@ -78,7 +82,7 @@ create table FM.transition_phrases (
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
-create function FM.add_atom( ¶atom FM.atom, ¶kind text, ¶comment text )
+create function FM.add_atom( ¶atom FM_TYPES.atom, ¶kind text, ¶comment text )
   -- ### TAINT should check that kind and sigil match
   returns boolean volatile language plpgsql as $$
   begin
@@ -87,13 +91,13 @@ create function FM.add_atom( ¶atom FM.atom, ¶kind text, ¶comment text )
     return found;
   end; $$;
 
-comment on function FM.add_atom( FM.atom, text, text ) is 'Given a name, and an optional comment,
+comment on function FM.add_atom( FM_TYPES.atom, text, text ) is 'Given a name, and an optional comment,
 register the atom with table `FM.atoms`. In case the atom has already been registered, an error will
 be thrown.';
 
 -- ---------------------------------------------------------------------------------------------------------
 create function FM.add_pair(
-  ¶topic FM.topic, ¶focus FM.focus, ¶kind text, ¶dflt boolean, ¶comment text )
+  ¶topic FM_TYPES.topic, ¶focus FM_TYPES.focus, ¶kind text, ¶dflt boolean, ¶comment text )
   -- ### TAINT consider to split into two functions to add states, actions
   -- ### TAINT should check that kind and sigil match
   returns boolean volatile language plpgsql as $$
@@ -103,7 +107,7 @@ create function FM.add_pair(
     return found;
   end; $$;
 
-comment on function FM.add_pair( FM.topic, FM.focus, text, boolean, text ) is 'Given a topic, a
+comment on function FM.add_pair( FM_TYPES.topic, FM_TYPES.focus, text, boolean, text ) is 'Given a topic, a
 focus, a kind, a default flag (indicating whether the new state is a default state), and an optional
 comment, register the pair with table `FM.pairs`. In case the pair has already been registered, an error
 will be thrown.';
@@ -143,6 +147,11 @@ do $$ begin
   -- perform FM.add_pair(  '°FSM', '^START',   'event',  false,  'start the automaton'                       );
   -- -------------------------------------------------------------------------------------------------------
   end; $$;
+
+insert into FM.transition_phrases ( conds, csqts ) values
+  -- '°FSM:IDLE,°FSM^START=>°FSM:ACTIVE'
+  ( array[ array[ '°FSM', ':IDLE' ], array[ '°FSM', '^START' ] ], array[ '°FSM', ':ACTIVE' ] );
+
 
 
 
