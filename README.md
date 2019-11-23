@@ -306,6 +306,27 @@ outside. Pairs are customarily written with both parts running together as in `�
 Phrases are **sequence of terms that lead from (conjunctions
 of) conditions to consequences**
 
+```
+( °FSM:IDLE ∧ °FSM:ACTIVE ∧ ... ) ⇒ ( °FSM^RESET ∧ °FSM^START ∧ ... )
+```
+
+```
+    °FSM:IDLE
+  + °FSM:ACTIVE
+  + ...
+  ——————————————————————
+  = °FSM^RESET
+  + °FSM^START
+  + ...
+```
+
+
+<!--
+\Rightarrow ⇒
+\vee        ∨
+\wedge      ∧
+ -->
+
 
 ## Continuous Values
 
@@ -357,6 +378,22 @@ whether to heat, to switch off heating, to cool, or to switch off cooling, as th
 ```
 °door:closed °plug:inserted °cooking:ongoing °button^release  ⇒ °button:released °cooking:stopped
 ```
+
+```
+  notation format:
+
+    '°mainswitch:released, °mainswitch^actuate => °mainswitch:pressed'
+
+  extended with predicates:
+
+    '°thermometer:temp%" x > 50°C "         => °heater^switchoff'
+    '°thermometer:temp%" x < 45°C "         => °heater^switchon'
+    '°thermometer:temp%" 50°C < x "         => °indicator:color%red
+    '°thermometer:temp%" 45°C < x < 50°C "  => °indicator:color%green
+    '°thermometer:temp%" 45°C > x "         => °indicator:color%blue
+```
+
+
 
 ## Sigils
 
