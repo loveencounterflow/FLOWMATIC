@@ -126,26 +126,8 @@ select * from FM.atoms;
 \echo :reverse:steel FM.pairs            :reset
 select * from FM.pairs;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_terms            :reset
-select * from FM.transition_terms;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_clausids            :reset
-select * from FM.transition_clausids;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_termids_and_clausids            :reset
-select * from FM.transition_termids_and_clausids;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_phrasids            :reset
-select * from FM.transition_phrasids;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_clauses            :reset :yellow view :reset
-select * from FM.transition_clauses;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases            :reset :yellow view :reset
+\echo :reverse:steel FM.transition_phrases            :reset
 select * from FM.transition_phrases;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_clauses_and_phrases            :reset :yellow view :reset
-select * from FM.transition_clauses_and_phrases;
 
 
 -- create table FM.predicates (
