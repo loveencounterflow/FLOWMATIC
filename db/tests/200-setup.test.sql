@@ -17,45 +17,92 @@ drop schema if exists X cascade;
 \set filename 200-setup.test.sql
 \pset pager on
 
--- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ :filename 2 }———:reset
--- insert into FM.atoms ( atom, kind, comment ) values
---   ( '°heatinglight',  'component',  'light to indicate oven is heating'       ),
---   ( '°powerlight',    'component',  'light to indicate oven is switched on'   ),
---   ( '°mainswitch',    'component',  'button to switch microwave on and off'   ),
---   ( ':pressed',       'aspect',     'when a button is in ''on'' position'     ),
---   ( ':released',      'aspect',     'when a button is in ''off'' position'    ),
---   ( ':on',            'aspect',     'something is active'                     ),
---   ( ':off',           'aspect',     'something is inactive'                   ),
---   ( '^press',         'verb',       'press a button'                          ),
---   ( '^release',       'verb',       'release a button'                        );
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 2 }———:reset
+do $$ begin
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_atom( '°heatinglight',   'component',  'light to indicate oven is heating'       );
+  perform FM.add_atom( '°powerlight',     'component',  'light to indicate oven is switched on'   );
+  perform FM.add_atom( '°mainswitch',     'component',  'button to switch microwave on and off'   );
+  perform FM.add_atom( '°plug',           'component',  'mains plug'                              );
+  perform FM.add_atom( ':pressed',        'aspect',     'when a button is in ''on'' position'     );
+  perform FM.add_atom( ':released',       'aspect',     'when a button is in ''off'' position'    );
+  perform FM.add_atom( ':on',             'aspect',     'something is active'                     );
+  perform FM.add_atom( ':off',            'aspect',     'something is inactive'                   );
+  perform FM.add_atom( ':inserted',       'aspect',     'plug is in socket'                       );
+  perform FM.add_atom( ':disconnected',   'aspect',     'plug is not in socket'                   );
+  perform FM.add_atom( '^actuate',        'verb',       'press or release a button'               );
+  perform FM.add_atom( '^insert',         'verb',       'insert plug into socket'                 );
+  perform FM.add_atom( '^pull',           'verb',       'pull plug from socket'                   );
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_pair( '°mainswitch',   ':pressed',       'state',  false,  'the power button is in ''on'' position'    );
+  perform FM.add_pair( '°mainswitch',   ':released',      'state',  true,   'the power button is in ''off'' position'   );
+  perform FM.add_pair( '°powerlight',   ':on',            'state',  false,  'the power light is bright'                 );
+  perform FM.add_pair( '°powerlight',   ':off',           'state',  true,   'the power light is dark'                   );
+  perform FM.add_pair( '°plug',         ':inserted',      'state',  false,  'the mains plug is inserted'                );
+  perform FM.add_pair( '°plug',         ':disconnected',  'state',  true,   'the mains plug is not inserted'            );
+  perform FM.add_pair( '°mainswitch',   '^actuate',       'event',  false,  'press or release the power button'         );
+  perform FM.add_pair( '°plug',         '^insert',        'event',  false,  'insert plug into socket'                   );
+  perform FM.add_pair( '°plug',         '^pull',          'event',  false,  'pull plug from socket'                     );
+  -- -------------------------------------------------------------------------------------------------------
+  -- -- improved interface:
+  -- perform FM.add_default_state(  '°mainswitch:released', 'the power button is in ''off'' position' );
+  -- perform FM.add_state(          '°mainswitch:pressed',  'the power button is in ''on'' position'  );
+  -- perform FM.add_event(          '°mainswitch^actuate',  'press or release the power button'       );
+  -- -------------------------------------------------------------------------------------------------------
+  -- perform FM.start_phrase();
+  --   perform FM.add_cond( '°plug',  ':released'  );
+  -- perform FM.start_phrase();
+  --   perform FM.add_cond( '°mainswitch',  ':released'  );
+  --   perform FM.add_cond( '°mainswitch',  '^actuate'   );
+  --   perform FM.add_csqt( '°mainswitch',  ':pressed'   );
+  -- perform FM.start_phrase();
+  --   perform FM.add_cond( '°mainswitch',  ':pressed'   );
+  --   perform FM.add_cond( '°mainswitch',  '^actuate'   );
+  --   perform FM.add_csqt( '°mainswitch',  ':released'  );
+  -- perform FM.start_phrase();
+  --   perform FM.add_cond( '°mainswitch',  ':pressed'   );
+  --   perform FM.add_csqt( '°powerlight',  ':on'        );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ :filename 5 }———:reset
--- insert into FM.pairs ( topic, focus, kind, dflt, comment ) values
---   ( '°mainswitch',  ':pressed',   'state',  false,  'the power button is in ''on'' position'    ),
---   ( '°mainswitch',  ':released',  'state',  true,   'the power button is in ''off'' position'   ),
---   ( '°powerlight',  ':on',        'state',  false,  'the power light is bright'                 ),
---   ( '°powerlight',  ':off',       'state',  true,   'the power light is dark'                   ),
---   ( '°mainswitch',  '^press',     'event',  false,  'press the power button'                    ),
---   ( '°mainswitch',  '^release',   'event',  false,  'release the power button'                  );
+  --   -- FM.end_phrase();
+
+  end; $$;
+
+
+  /*
+
+
+  transition_phrases
+    cond string[]                                       csqt string[]
+    {"°mainswitch:released","°mainswitch^actuate"}      {"°mainswitch:pressed"}
+    -- problem: no space to store predicates
+  */
+
+
+
+/*
+ FM.transition_terms
+╔════════╤═════════════╤═══════════╤═══════════╗
+║ termid │    topic    │   focus   │ predicate ║
+╠════════╪═════════════╪═══════════╪═══════════╣
+║      1 │ °FSM        │ :IDLE     │ true      ║
+║      2 │ °FSM        │ ^RESET    │ true      ║
+║      3 │ °FSM        │ :ACTIVE   │ true      ║
+║      4 │ °mainswitch │ :released │ true      ║
+║      5 │ °mainswitch │ ^press    │ true      ║
+║      6 │ °mainswitch │ :pressed  │ true      ║
+║      8 │ °mainswitch │ ^release  │ true      ║
+║     10 │ °powerlight │ :off      │ true      ║
+║     12 │ °powerlight │ :on       │ true      ║
+╚════════╧═════════════╧═══════════╧═══════════╝
+
+*/
+
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 7 }———:reset
 -- insert into FM.transitions ( termid, topic, focus, action ) values
 --   -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
---   ( 3,  '°mainswitch',    ':released',  4     ),
---   ( 3,  '°mainswitch',    '^press',     4     ),
---   ( 4,  '°mainswitch',    ':pressed',   null  ),
---   ( 5,  '°mainswitch',    ':pressed',   6     ),
---   ( 5,  '°mainswitch',    '^release',   6     ),
---   ( 6,  '°mainswitch',    ':released',  null  ),
---   ( 7,  '°powerlight',    ':off',       8     ),
---   ( 7,  '°mainswitch',    '^press',     8     ),
---   ( 8,  '°powerlight',    ':on',        null  ),
---   ( 9,  '°powerlight',    ':on',        10    ),
---   ( 9,  '°mainswitch',    '^release',   10    ),
---   ( 10, '°powerlight',    ':off',       null  );
 
 -- -- ---------------------------------------------------------------------------------------------------------
 -- \echo :signal ———{ :filename 8 }———:reset
@@ -91,15 +138,23 @@ select * from FM.transition_termids_and_clausids;
 \echo :reverse:steel FM.transition_phrasids            :reset
 select * from FM.transition_phrasids;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_clauses            :reset
+\echo :reverse:steel FM.transition_clauses            :reset :yellow view :reset
 select * from FM.transition_clauses;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases            :reset
+\echo :reverse:steel FM.transition_phrases            :reset :yellow view :reset
 select * from FM.transition_phrases;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_clauses_and_phrases            :reset
+\echo :reverse:steel FM.transition_clauses_and_phrases            :reset :yellow view :reset
 select * from FM.transition_clauses_and_phrases;
 
+
+-- create table FM.predicates (
+--   predicate jsonb[]
+--   );
+-- insert into FM.predicates ( predicate ) values
+--   ( array[ '42', 'false', 'null', '[2,3,5,7]' ]::jsonb[] ),
+--   ( array[ '42', 'true' ]::jsonb[] );
+-- select * from FM.predicates;
 
 
 /* ###################################################################################################### */

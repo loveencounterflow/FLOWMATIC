@@ -252,17 +252,17 @@ do $$ begin
   perform FM.add_atom( ':IDLE',      'aspect',     'when the automaton is not in use'          );
   perform FM.add_atom( ':ACTIVE',    'aspect',     'when the automaton is in use'              );
   perform FM.add_atom( '^RESET',     'verb',       'put the automaton in its initial state'    );
-  perform FM.add_atom( '^START',     'verb',       'start the automaton'                       );
+  -- perform FM.add_atom( '^START',     'verb',       'start the automaton'                       );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_pair(  '°FSM', ':IDLE',    'state',  true,   'the automaton is not in use'               );
   perform FM.add_pair(  '°FSM', ':ACTIVE',  'state',  false,  'the automaton is in use'                   );
   perform FM.add_pair(  '°FSM', '^RESET',   'event',  false,  'reset the automaton to its initial state'  );
-  perform FM.add_pair(  '°FSM', '^START',   'event',  false,  'start the automaton'                       );
+  -- perform FM.add_pair(  '°FSM', '^START',   'event',  false,  'start the automaton'                       );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_transition_term(  '°FSM',   ':IDLE',    'true'  );
   perform FM.add_transition_term(  '°FSM',   '^RESET',   'true'  );
   perform FM.add_transition_term(  '°FSM',   ':ACTIVE',  'true'  );
-  perform FM.add_transition_term(  '°FSM',   '^START',   'true'  );
+  -- perform FM.add_transition_term(  '°FSM',   '^START',   'true'  );
   end; $$;
 
 
@@ -277,8 +277,8 @@ insert into FM.transition_clausids ( clausid, comment ) values
 insert into FM.transition_termids_and_clausids ( termid, clausid ) values
   ( 1, 1 ),
   ( 2, 1 ),
-  ( 3, 2 ),
-  ( 4, 2 );
+  ( 3, 2 );
+  -- ( 4, 2 );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 10 }———:reset
