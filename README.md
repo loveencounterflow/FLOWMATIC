@@ -156,10 +156,10 @@ It can be readily seen that in the above table
 * the value for `target_item` must be the same for all rows referring to the same term.
 
 This leads us to a generalization: what if we didn't use a target *item* but a target *term*? That would
-allow us to notate *both* consequences *and* conditions as vectors in a unified fashion. Moreover, let's
+allow us to notate *both* consequents *and* conditions as vectors in a unified fashion. Moreover, let's
 introduce the concept of a 'phrase', which we define as the **sequence of terms that lead from (conjunctions
-of) conditions (and optional intermediaries) to consequences**. In the below table, we have added a nonsense
-`term:99` to show that **phrases may overlap in their consequences**; this is the effect of disjunctions:
+of) conditions (and optional intermediaries) to consequents**. In the below table, we have added a nonsense
+`term:99` to show that **phrases may overlap in their consequents**; this is the effect of disjunctions:
 
 ```
 ( a ∨ b ) ⇒ d
@@ -297,14 +297,11 @@ make sure that only licensed combinations may appear in transition rules and eve
 outside. Pairs are customarily written with both parts running together as in `°bell^ring` or
 `°door:closed`.
 
-### Terms
-
-### Clauses
 
 ### Phrases
 
 Phrases are **sequence of terms that lead from (conjunctions
-of) conditions to consequences**
+of) conditions to consequents**
 
 ```
 ( °FSM:IDLE ∧ °FSM:ACTIVE ∧ ... ) ⇒ ( °FSM^RESET ∧ °FSM^START ∧ ... )
