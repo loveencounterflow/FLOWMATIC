@@ -50,6 +50,9 @@ do $$ begin
   -- perform FM.add_state(          '°mainswitch:pressed',  'the power button is in ''on'' position'  );
   -- perform FM.add_event(          '°mainswitch^actuate',  'press or release the power button'       );
   -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_transition( '  °mainswitch:released, °mainswitch^actuate => °mainswitch:pressed  ' );
+  perform FM.add_transition( '°mainswitch:released, °mainswitch^actuate => °mainswitch:pressed' );
+  perform FM.add_transition( '°mainswitch:released,°mainswitch^actuate => °mainswitch:pressed' );
   -- perform FM.start_phrase();
   --   perform FM.add_cond( '°plug',  ':released'  );
   -- perform FM.start_phrase();
