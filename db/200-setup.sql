@@ -156,6 +156,20 @@ create table FM.transition_phrases (
     -- csqt_predicates   FM_TYPES.predicates[],
     );
 
+-- ---------------------------------------------------------------------------------------------------------
+-- The standard-relational version of FM.transition_phrases`:
+create view FM.transition_phrases_spread as ( select
+    id                          as phrasid,
+    cond.nr                     as cond_nr,
+    csqt.nr                     as csqt_nr,
+    cond.topic                  as cond_topic,
+    TP.cond_focuses[ cond.nr ]  as cond_focus,
+    csqt.topic                  as csqt_topic,
+    TP.csqt_focuses[ csqt.nr ]  as csqt_focus
+  from FM.transition_phrases as TP,
+  lateral unnest( cond_topics ) with ordinality cond ( topic, nr ),
+  lateral unnest( csqt_topics ) with ordinality csqt ( topic, nr ) );
+
 
 -- =========================================================================================================
 -- LOG(S)
