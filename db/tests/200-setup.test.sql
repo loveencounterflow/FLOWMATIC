@@ -53,6 +53,7 @@ do $$ begin
   -- perform FM.add_transition( '  °mainswitch:released, °mainswitch^actuate => °mainswitch:pressed  ' );
   -- perform FM.add_transition( '°mainswitch:released, °mainswitch^actuate => °mainswitch:pressed' );
   perform FM.add_transition( '°mainswitch:released,°mainswitch^actuate => °mainswitch:pressed' );
+  perform FM.add_transition( '°plug:inserted,°plug^pull => °plug:disconnected,°powerlight:off' );
   end; $$;
 
 
@@ -91,15 +92,17 @@ create function FM_FSM.match_event( ¶row FM.queue )
     ¶remark       text  :=  'RESOLVED';
     ¶transitions  record;
   begin
-    for ¶transitions in
-      select csqt_topics, csqt_focuses
-        from FM.transition_phrases
-          where true
-            and topic = ¶row.topic
-            and focus = ¶row.focus
-      loop
-        perform log( '^3877^', transitions::text );
-        end loop;
+    perform log( '^388799^', ¶row::text );
+    ¶remark :=  'UNPROCESSED';
+    -- for ¶transitions in
+    --   select csqt_topics, csqt_focuses
+    --     from FM.transition_phrases
+    --       where true
+    --         and topic = ¶row.topic
+    --         and focus = ¶row.focus
+    --   loop
+    --     perform log( '^3877^', transitions::text );
+    --     end loop;
     return ¶remark;
     end; $$;
 
@@ -119,8 +122,8 @@ create function FM.on_after_insert_into_fm_eventqueue() returns trigger language
     -- .....................................................................................................
     case ¶event
       when '°FSM^RESET' then  perform FM_FSM.reset();
-      -- else                    ¶remark :=  FM_FSM.match_event( new );
-      else                    ¶remark :=  'UNPROCESSED';
+      else                    ¶remark :=  FM_FSM.match_event( new );
+      -- else                    ¶remark :=  'UNPROCESSED';
       end case;
     -- .....................................................................................................
     perform FM_FSM.move_queued_event_to_journal( new, ¶remark );
@@ -131,18 +134,14 @@ create function FM.on_after_insert_into_fm_eventqueue() returns trigger language
 create trigger on_after_insert_into_fm_eventqueue after insert on FM.queue
   for each row execute procedure FM.on_after_insert_into_fm_eventqueue();
 
-insert into FM.queue ( topic, focus ) values ( '°FSM', '^RESET' );
--- insert into FM.queue ( topic, focus ) values ( '°FSM', '^START' );
-insert into FM.queue ( topic, focus ) values ( '°mainswitch', '^actuate' );
-
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
--- .........................................................................................................
-\echo :reverse:steel FM.kinds            :reset
-select * from FM.kinds;
--- .........................................................................................................
-\echo :reverse:steel FM.atoms            :reset
-select * from FM.atoms;
+-- -- .........................................................................................................
+-- \echo :reverse:steel FM.kinds            :reset
+-- select * from FM.kinds;
+-- -- .........................................................................................................
+-- \echo :reverse:steel FM.atoms            :reset
+-- select * from FM.atoms;
 -- .........................................................................................................
 \echo :reverse:steel FM.pairs            :reset
 select * from FM.pairs;
@@ -150,8 +149,15 @@ select * from FM.pairs;
 \echo :reverse:steel FM.transition_phrases            :reset
 select * from FM.transition_phrases;
 -- .........................................................................................................
-\echo :reverse:steel FM.queue            :reset
-select * from FM.queue;
+\echo :reverse:steel FM.transition_phrases_spread            :reset
+select * from FM.transition_phrases_spread;
+--- -- .........................................................................................................
+-- \echo :reverse:steel FM.queue            :reset
+-- select * from FM.queue;
+insert into FM.queue ( topic, focus ) values ( '°FSM', '^RESET' );
+-- insert into FM.queue ( topic, focus ) values ( '°FSM', '^START' );
+insert into FM.queue ( topic, focus ) values ( '°mainswitch', '^actuate' );
+
 -- .........................................................................................................
 \echo :reverse:steel FM.journal            :reset
 select * from FM.journal;
@@ -165,15 +171,21 @@ select * from FM.current_events;
 \echo :reverse:steel FM.current_journal            :reset
 select * from FM.current_journal;
 
+-- select
+--     *
+--   from FM.transition_phrases_spread as transition
+--   -- join FM.current_journal           as current on ( transition.cond_topic = current.topic )
+--   where transition.id in ( select id
+--     from FM.transition_phrases_spread as transition
+--     where true
+--       and ( transition.cond_topic = '°mainswitch' )
+--       and ( transition.cond_focus = ':released' ) )
+--     ;
 
--- select * from FM.journal
---   where true
---     and kind = 'state'
---   order by id desc;
 
--- create table FM.predicates (
---   predicate jsonb[]
---   );
+
+
+
 -- insert into FM.predicates ( predicate ) values
 --   ( array[ '42', 'false', 'null', '[2,3,5,7]' ]::jsonb[] ),
 --   ( array[ '42', 'true' ]::jsonb[] );
