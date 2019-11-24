@@ -50,75 +50,93 @@ do $$ begin
   -- perform FM.add_state(          '°mainswitch:pressed',  'the power button is in ''on'' position'  );
   -- perform FM.add_event(          '°mainswitch^actuate',  'press or release the power button'       );
   -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_transition( '  °mainswitch:released, °mainswitch^actuate => °mainswitch:pressed  ' );
-  perform FM.add_transition( '°mainswitch:released, °mainswitch^actuate => °mainswitch:pressed' );
+  -- perform FM.add_transition( '  °mainswitch:released, °mainswitch^actuate => °mainswitch:pressed  ' );
+  -- perform FM.add_transition( '°mainswitch:released, °mainswitch^actuate => °mainswitch:pressed' );
   perform FM.add_transition( '°mainswitch:released,°mainswitch^actuate => °mainswitch:pressed' );
-  -- perform FM.start_phrase();
-  --   perform FM.add_cond( '°plug',  ':released'  );
-  -- perform FM.start_phrase();
-  --   perform FM.add_cond( '°mainswitch',  ':released'  );
-  --   perform FM.add_cond( '°mainswitch',  '^actuate'   );
-  --   perform FM.add_csqt( '°mainswitch',  ':pressed'   );
-  -- perform FM.start_phrase();
-  --   perform FM.add_cond( '°mainswitch',  ':pressed'   );
-  --   perform FM.add_cond( '°mainswitch',  '^actuate'   );
-  --   perform FM.add_csqt( '°mainswitch',  ':released'  );
-  -- perform FM.start_phrase();
-  --   perform FM.add_cond( '°mainswitch',  ':pressed'   );
-  --   perform FM.add_csqt( '°powerlight',  ':on'        );
-
-  --   -- FM.end_phrase();
-
   end; $$;
 
 
-  /*
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.reset() returns void volatile language plpgsql as $$
+  -- Reset all values to their defaults
+  begin
+    perform log( '^FM_FSM.reset^' );
+    insert into FM.journal  ( topic, focus, kind, remark )
+      select                  topic, focus, kind, 'RESET'
+      from FM.pairs
+      where dflt; -- `kind = 'state'` is implicit for `dflt = true`
+    -- ### TAINT consider to actually use entries in `transition_phrases`:
+    insert into FM.journal  ( topic,  focus,      kind,     remark  ) values
+                            ( '°FSM', ':ACTIVE',  'state',  'RESET' );
+    end; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.record_unmatched_event( ¶row FM.queue ) returns void volatile language plpgsql as $$
+  begin
+    insert into FM.journal ( topic, focus, remark ) values ( ¶row.topic, ¶row.focus, 'UNPROCESSED' );
+    end; $$;
 
-  transition_phrases
-    cond string[]                                       csqt string[]
-    {"°mainswitch:released","°mainswitch^actuate"}      {"°mainswitch:pressed"}
-    -- problem: no space to store predicates
-  */
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.move_queued_event_to_journal( ¶row FM.queue, ¶remark text )
+  returns void volatile language plpgsql as $$
+  begin
+    delete from FM.queue where id = ¶row.id;
+    insert into FM.journal ( topic, focus, kind, remark ) values ( ¶row.topic, ¶row.focus, 'event', ¶remark );
+    end; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.match_event( ¶row FM.queue )
+  returns text volatile language plpgsql as $$
+  declare
+    ¶remark       text  :=  'RESOLVED';
+    ¶transitions  record;
+  begin
+    for ¶transitions in
+      select csqt_topics, csqt_focuses
+        from FM.transition_phrases
+          where true
+            and topic = ¶row.topic
+            and focus = ¶row.focus
+      loop
+        perform log( '^3877^', transitions::text );
+        end loop;
+    return ¶remark;
+    end; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+/* ### TAINT  when used as an actual queue, should not trigger on insert but run independently, possibly
+              using external clok. */
+create function FM.on_after_insert_into_fm_eventqueue() returns trigger language plpgsql as $$
+  declare
+    ¶event    text  :=  null;
+    ¶remark   text  :=  'RESOLVED';
+  begin
+    ¶event  := new.topic || new.focus;
+    perform log( '^6643^', new::text );
+    perform log( '^6643^', new.topic::text );
+    perform log( '^6643^', new.focus::text );
+    perform log( '^6643^', pg_typeof( new )::text );
+    -- .....................................................................................................
+    case ¶event
+      when '°FSM^RESET' then  perform FM_FSM.reset();
+      -- else                    ¶remark :=  FM_FSM.match_event( new );
+      else                    ¶remark :=  'UNPROCESSED';
+      end case;
+    -- .....................................................................................................
+    perform FM_FSM.move_queued_event_to_journal( new, ¶remark );
+    return null;
+    end; $$;
 
-/*
- FM.transition_terms
-╔════════╤═════════════╤═══════════╤═══════════╗
-║ termid │    topic    │   focus   │ predicate ║
-╠════════╪═════════════╪═══════════╪═══════════╣
-║      1 │ °FSM        │ :IDLE     │ true      ║
-║      2 │ °FSM        │ ^RESET    │ true      ║
-║      3 │ °FSM        │ :ACTIVE   │ true      ║
-║      4 │ °mainswitch │ :released │ true      ║
-║      5 │ °mainswitch │ ^press    │ true      ║
-║      6 │ °mainswitch │ :pressed  │ true      ║
-║      8 │ °mainswitch │ ^release  │ true      ║
-║     10 │ °powerlight │ :off      │ true      ║
-║     12 │ °powerlight │ :on       │ true      ║
-╚════════╧═════════════╧═══════════╧═══════════╝
+-- ---------------------------------------------------------------------------------------------------------
+create trigger on_after_insert_into_fm_eventqueue after insert on FM.queue
+  for each row execute procedure FM.on_after_insert_into_fm_eventqueue();
 
-*/
-
-
--- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ :filename 7 }———:reset
--- insert into FM.transitions ( termid, topic, focus, action ) values
---   -- ( '°mainswitch', ':pressed', '°mainswitch', '^press', '°mainswitch', ':pressed' ),
-
--- -- ---------------------------------------------------------------------------------------------------------
--- \echo :signal ———{ :filename 8 }———:reset
--- insert into FM.eventlog ( component, verb ) values
---   ( '°FSM',         '^RESET'    ),
---   -- ( '°FSM',         '^START'    ),
---   ( '°mainswitch',  '^press'    ),
---   ( '°mainswitch',  '^release'  );
+insert into FM.queue ( topic, focus ) values ( '°FSM', '^RESET' );
+-- insert into FM.queue ( topic, focus ) values ( '°FSM', '^START' );
+insert into FM.queue ( topic, focus ) values ( '°mainswitch', '^actuate' );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
-
-
 -- .........................................................................................................
 \echo :reverse:steel FM.kinds            :reset
 select * from FM.kinds;
@@ -131,7 +149,27 @@ select * from FM.pairs;
 -- .........................................................................................................
 \echo :reverse:steel FM.transition_phrases            :reset
 select * from FM.transition_phrases;
+-- .........................................................................................................
+\echo :reverse:steel FM.queue            :reset
+select * from FM.queue;
+-- .........................................................................................................
+\echo :reverse:steel FM.journal            :reset
+select * from FM.journal;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_states            :reset
+select * from FM.current_states;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_events            :reset
+select * from FM.current_events;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_journal            :reset
+select * from FM.current_journal;
 
+
+-- select * from FM.journal
+--   where true
+--     and kind = 'state'
+--   order by id desc;
 
 -- create table FM.predicates (
 --   predicate jsonb[]
