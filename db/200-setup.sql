@@ -20,6 +20,7 @@ drop schema if exists FM_FSM    cascade; create schema FM_FSM;
 --
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
+-- ### TAINT use intershop.ptv variables to make configurable?
 create domain FM_TYPES.positive_integer as integer  check ( value > 0                   );
 create domain FM_TYPES.nonempty_text    as text     check ( value ~ '.+'                );
 create domain FM_TYPES.component        as text     check ( value ~ '^°.+'              );
@@ -32,20 +33,30 @@ create domain FM_TYPES.sigil            as text     check ( value ~ '^[°^:]$'  
 create domain FM_TYPES.sigilcombo       as text     check ( value ~ '^([°^:])|(°[^:])$' );
 -- create domain FM.predicate        as jsonb    check ( true                        );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- create type FM_TYPES.state as (
---   component   FM_TYPES.component,
---   aspect      FM_TYPES.aspect );
+-- ---------------------------------------------------------------------------------------------------------
+create type FM_TYPES.pair as (
+  topic   FM_TYPES.topic,
+  focus   FM_TYPES.focus );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- create type FM_TYPES.pair as (
---   component   FM_TYPES.topic,
---   aspect      FM_TYPES.focus );
+-- ---------------------------------------------------------------------------------------------------------
+create type FM_TYPES.state as (
+  topic   FM_TYPES.component,
+  focus   FM_TYPES.aspect );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- create type FM_TYPES.pair as (
---   component   FM_TYPES.topic,
---   aspect      FM_TYPES.focus );
+-- ---------------------------------------------------------------------------------------------------------
+create type FM_TYPES.action as (
+  topic   FM_TYPES.component,
+  focus   FM_TYPES.verb );
+
+-- ---------------------------------------------------------------------------------------------------------
+create type FM_TYPES.premise as (
+  conds     FM_TYPES.state[],
+  trigger   FM_TYPES.action );
+
+-- ---------------------------------------------------------------------------------------------------------
+create type FM_TYPES.effect as (
+  csqts     FM_TYPES.state[],
+  moves     FM_TYPES.action[] );
 
 
 -- =========================================================================================================
