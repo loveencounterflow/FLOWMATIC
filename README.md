@@ -606,3 +606,58 @@ conditions                      | trigger        |  consequents
   walkthrough act. That is, a series of commands that are connected by `...`
   (continuations) can not wait for a specific action anywhere; such series must
   always run to completion until a properly named point is reached.
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Alternative implementation of transition phrases with 'column vectors', that is to say, both the first and
+second parts (topics and focuses) of the terms of both the condition pairs and the consequent pairs get
+stored separatedly; they can be repaired by iterating over indices since `|cond_topics| =
+|cond_focuses|` and `|csqt_topics| = |csqt_focuses|`, respectively; as a result, the representation of a
+transition phrase like `°FSM:IDLE,°FSM^START => °FSM:ACTIVE` is rather less nested (no arrays of
+composite types), and while there are, naturally, more columns, they are more narrowly typed. This is a
+good thing since now there's an obvious place where to put predicates in the future (namely, into two
+dedicated columns `cond_predicates`, `csqt_predicates`):
+
+```
+ FM.transition_phrases
+╔════╤══════════════════════════════════╤════════════════════╗
+║ id │              conds               │       csqts        ║
+╠════╪══════════════════════════════════╪════════════════════╣
+║  1 │ {"(°FSM,:IDLE)","(°FSM,^START)"} │ {"(°FSM,:ACTIVE)"} ║
+╚════╧══════════════════════════════════╧════════════════════╝
+
+ FM.transition_phrases_2
+╔════╤═════════════╤════════════════╤═════════════╤══════════════╗
+║ id │ cond_topics │  cond_focuses  │ csqt_topics │ csqt_focuses ║
+╠════╪═════════════╪════════════════╪═════════════╪══════════════╣
+║  1 │ {°FSM,°FSM} │ {:IDLE,^START} │ {°FSM}      │ {:ACTIVE}    ║
+╚════╧═════════════╧════════════════╧═════════════╧══════════════╝
+```
+I say 'column vectors b/c that's how one should read them:
+```
+╔════╤═════════════╤════════════════╤═════════════╤══════════════╗
+║ id │ cond_topics │  cond_focuses  │ csqt_topics │ csqt_focuses ║
+╠════╪═════════════╪════════════════╪═════════════╪══════════════╣
+║  1 │ {°FSM,      │ {:IDLE,        │ {°FSM}      │ {:ACTIVE}    ║
+║    │  °FSM}      │  ^START}       │             │              ║
+╚════╧═════════════╧════════════════╧═════════════╧══════════════╝
+```
+
+This form may be easily rewritten into a more standard relational form without arrays:
+
+```
+╔════╤═════════════╤════════════════╤═════════════╤══════════════╗
+║ id │ cond_topics │  cond_focuses  │ csqt_topics │ csqt_focuses ║
+╠════╪═════════════╪════════════════╪═════════════╪══════════════╣
+║  1 │  °FSM       │  :IDLE         │  °FSM       │  :ACTIVE     ║
+║  2 │  °FSM       │  ^START        │  °FSM       │  :ACTIVE     ║
+╚════╧═════════════╧════════════════╧═════════════╧══════════════╝
+```
+
+And of course, `(cond_topics,cond_focuses)` and `(csqt_topics,csqt_focuses)` should be modelled as
+references to the `pairs` table because that is what they are, quotes of elements of the set of licensed
+pairs (states and actions). That, however, can only be done with intermediate `m:n` relations, which
+have been conveniently omitted here. *But* when we introduce predicates (a.k.a. 'payloads'), then things
+get more involved, so let's keep the conceptually simpler model for the time being.
