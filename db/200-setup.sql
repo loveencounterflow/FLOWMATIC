@@ -167,6 +167,7 @@ create view FM.transition_phrases_spread as ( select
     csqt.topic                  as csqt_topic,
     TP.csqt_focuses[ csqt.nr ]  as csqt_focus
   from FM.transition_phrases as TP,
+  -- ### NOTE could also use unnest( a1, a2, ... ) in from clause
   lateral unnest( cond_topics ) with ordinality cond ( topic, nr ),
   lateral unnest( csqt_topics ) with ordinality csqt ( topic, nr ) );
 
@@ -205,17 +206,15 @@ create view FM.current_states as ( select *
     where kind = 'state' ) );
 
 -- .........................................................................................................
--- ### TAINT not clear at this point whether 'current' event is oldest in queue or newest in journal
-create view FM.current_events as ( select *
-  from FM.journal where id in ( select distinct
-      max( id ) over ( partition by topic ) as id
-    from FM.journal
-    where kind = 'event' ) );
+-- current event is oldest event in queue
+create view FM.current_event as ( select *
+  from FM.queue where id = ( select min( id ) as id from FM.queue ) );
 
 -- .........................................................................................................
+-- ### TAINT briningig together two independant IDs from 2 tables
 create view FM.current_journal as (
-  ( select * from FM.current_states ) union all
-  ( select * from FM.current_events )
+  ( select id, t, topic, focus, kind, remark    from FM.current_states ) union all
+  ( select id, t, topic, focus, 'event', null   from FM.current_event )
   order by topic, kind, focus );
 
 
@@ -255,6 +254,12 @@ comment, register the pair with table `FM.pairs`. In case the pair has already b
 will be thrown.';
 
 -- ---------------------------------------------------------------------------------------------------------
+-- ### TAINT may want to count events to check event count is 0 or 1
+create function FM._cond_focuses_has_no_event( ¶cond_focuses FM_TYPES.focus[] )
+  returns boolean immutable parallel safe language sql as $$
+    select not U._any_matches( ¶cond_focuses, '^\^' ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
 create function FM.add_transition(
   ¶cond_topics FM_TYPES.topic[], ¶cond_focuses FM_TYPES.focus[],
   ¶csqt_topics FM_TYPES.topic[], ¶csqt_focuses FM_TYPES.focus[] )
@@ -262,6 +267,10 @@ create function FM.add_transition(
   begin
     -- make sure lengths of cond_topics, cond_focuses are equal and > 0
     -- make sure lengths of csqt_topics, csqt_focuses are equal and > 0
+    if FM._cond_focuses_has_no_event( ¶cond_focuses ) then
+      ¶cond_topics  :=  array_append( ¶cond_topics, '°FSM'    );
+      ¶cond_focuses :=  array_append( ¶cond_focuses, '^TICK'  );
+      end if;
     insert into FM.transition_phrases ( cond_topics, cond_focuses, csqt_topics, csqt_focuses ) values
       ( ¶cond_topics, ¶cond_focuses, ¶csqt_topics, ¶csqt_focuses );
   end; $$;
@@ -300,6 +309,7 @@ are not yet split into topics and focuses).';
 
 -- ---------------------------------------------------------------------------------------------------------
 -- ### TAINT use more precise input type?
+-- ### TAINT validate that each phrase contains exactly one event (plus any number of state matchers)
 create function FM.add_transition( ¶phrase FM_TYPES.nonempty_text )
   returns void volatile language plpgsql as $$
   declare
