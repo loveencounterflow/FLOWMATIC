@@ -7,9 +7,32 @@
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 1 }———:reset
 drop schema if exists X cascade;
+create schema X;
 \ir '../200-setup.sql'
 \set filename xxx-transactions-and-procedures.sql
 \pset pager on
+
+create table X.something ( x text );
+
+-- ---------------------------------------------------------------------------------------------------------
+-- # must use inout paramters or return table
+\echo :signal ———{ :filename 2 }———:reset
+create procedure X.mathcalcs(
+  x int, y int,
+  out sum             int,
+  out subtract        int,
+  out multiplication  int,
+  out division        int)
+  language plpgsql as $$
+  begin
+    sum := x + y;
+    subtract := x - y;
+    multiplication := x * y;
+    division := x / y;
+    end; $$;
+
+select * from X.mathcalcs( 12, 14 );
+call X.mathcalcs( 12, 14 );
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
@@ -18,9 +41,13 @@ do $$ begin
   end; $$;
 
 
+-- begin transaction;
+-- insert into X.something values ( 'anything' );
+-- select * from X.something;
 
-/* ====================================================================================================== */
-\ir './test-perform.sql'
+-- abort transaction;
+-- select * from X.something;
+
 
 \pset pager on
 -- select distinct xcode from FACTORS.factors order by xcode;
@@ -31,6 +58,9 @@ do $$ begin
 \ir './test-end.sql'
 \quit
 
+
+/* ====================================================================================================== */
+\ir './test-perform.sql'
 
 
 -- ---------------------------------------------------------------------------------------------------------
