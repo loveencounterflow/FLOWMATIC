@@ -138,7 +138,7 @@ assertion/negation, here called `pred` (for 'predicate'):
 
 ```
                     'condition'               'consequence'
-                    'premise'                 'action'
+                    'premise'
                     'if'                      'then'
 term        pred    source_item           ⇒  target_item
 ——————————— ——————— ————————————————————— ——— ———————————————————
@@ -409,6 +409,116 @@ event:  °component^verb
 state:  °component:aspect
 ```
 
+## Microwave Oven model
+
+Components:
+
+```
+°switch       main switch, °switch^toggle => :on or :off
+°start        start switch to initiate cooking procedure when °start^press occurs
+°indicator    indicator light, :on when operating, :off otherwise
+°lighting     cooking space illumination, :on when powered and door closed, :off otherwise
+°magnetron    heating element, :on when operating, :off otherwise
+°timer        starts :running with fixed delta time, terminates cooking when delta time is over
+°power        :on or :off, indicates whether appliance connected to mains
+°door         when :open, inhibits cooking; when :closed, allows cooking
+```
+
+## Tripartite Phrase Model (Upcoming)
+
+* machine state described by `°component:aspect` pairs
+* these form a state vector
+* each component has `n > 1` possible aspects
+* plus one abstract aspect `:*` (not formally necessary, but practical):
+* `:*` means 'match any aspect' in the condition
+* `:*` means 'no change' in the consequent
+* a transition phrase consists of condition, event, consequent
+* event is always one single `°component^verb`
+* or an abstract default event, call it `°_^next` (where `°_` symbolizes the engine component itself)
+* both condition (`cond`) and consequent (`csqt`) are formally always complete machine state vectors (with
+  wildcard elements indicated by `:*` aspects), in practice only relevant matches and state changes need be
+  written
+* machine transitions from `cond` state to `csqt` state when all `cond` terms match and event occurs
+* after state transition has been performed, any number of *moves* ('future events') may be queued
+* possible to declare transitions without conditions but with event
+* possible to declare transitions without consequents but with one or more moves
+
+> An event is what causes a state machine to transition from its current state to its next state. All state
+> transitions in a state machine are due to these events; state cannot change unless some stimulus (the
+> event) causes it to change.—https://xstate.js.org/docs/guides/events.html#sending-events
+
+Mnemonic:
+
+```
+transition phrase := IF °con:ditions WHEN °e^vent THEN °con:sequents WITH °mo^ves
+```
+
+> A transition phrase declares, on the left hand side, a number of state conditions to be met and exactly
+> one an event (the trigger) to occur; and, on the right hand side, a number of state consequents to be
+> followed, plus any number of moves (future events) to be queued.
+
+
+```
+°light:off  &  °_^next   =>  °light:on   ||  °_^next
+°light:on   &  °_^next   =>  °light:off  ||  °_^next
+
+°light:off  &  °light^on   =>  °light:on   ||  °timer^sleep%0.5s, °light^off, °timer^sleep%0.5s, °light^on
+°light:on   &  °light^off  =>  °light:off
+
+°plug:disconnected  & °_^* => °power:off
+°power:off          & °_^* => °light:off
+
+°con:dition & °e^vent => °con:sequent || °mo^ve1, °mo^ve2, ...
+
+
+```
+
+`°_^*`—occurs implicitly
+`°_^+`—any explicit event
+
+```
+╔═════════╤════════╤════════╤════════════╤═══════════════╤════════════╤════════════╗
+║ phrasid │ condid │ csqtid │ cond_topic │  cond_focus   │ csqt_topic │ csqt_focus ║
+╠═════════╪════════╪════════╪════════════╪═══════════════╪════════════╪════════════╣
+║       1 │      1 │      1 │ °FSM       │ :IDLE         │ °FSM       │ :ACTIVE    ║
+║       1 │      2 │      1 │ °FSM       │ ^START        │ °FSM       │ :ACTIVE    ║
+║       2 │      1 │      1 │ °switch    │ :off          │ °switch    │ :on        ║
+║       2 │      2 │      1 │ °switch    │ ^toggle       │ °switch    │ :on        ║
+║       3 │      1 │      1 │ °switch    │ :on           │ °switch    │ :off       ║
+║       3 │      2 │      1 │ °switch    │ ^toggle       │ °switch    │ :off       ║
+║       4 │      1 │      1 │ °plug      │ :disconnected │ °power     │ :off       ║
+║       4 │      2 │      1 │ °FSM       │ ^TICK         │ °power     │ :off       ║
+║       5 │      1 │      1 │ °switch    │ :off          │ °power     │ :off       ║
+║       5 │      2 │      1 │ °FSM       │ ^TICK         │ °power     │ :off       ║
+╚═════════╧════════╧════════╧════════════╧═══════════════╧════════════╧════════════╝
+```
+
+```
+╔═════════╤════════╤════════╤════════════╤═══════════════╤════════════╤════════════╗
+║ phrasid │ condid │ csqtid │ cond_topic │  cond_focus   │ csqt_topic │ csqt_focus ║
+╠═════════╪════════╪════════╪════════════╪═══════════════╪════════════╪════════════╣
+║       1 │      1 │      1 │ °FSM       │ :IDLE         │ °FSM       │ :ACTIVE    ║
+║       1 │      2 │      1 │ °FSM       │ ^START        │ °FSM       │ :ACTIVE    ║
+║       2 │      1 │      1 │ °switch    │ :off          │ °switch    │ :on        ║
+║       2 │      2 │      1 │ °switch    │ ^toggle       │ °switch    │ :on        ║
+║       3 │      1 │      1 │ °switch    │ :on           │ °switch    │ :off       ║
+║       3 │      2 │      1 │ °switch    │ ^toggle       │ °switch    │ :off       ║
+║       4 │      1 │      1 │ °plug      │ :disconnected │ °power     │ :off       ║
+║       4 │      2 │      1 │ °FSM       │ ^TICK         │ °power     │ :off       ║
+║       5 │      1 │      1 │ °switch    │ :off          │ °power     │ :off       ║
+║       5 │      2 │      1 │ °FSM       │ ^TICK         │ °power     │ :off       ║
+╚═════════╧════════╧════════╧════════════╧═══════════════╧════════════╧════════════╝
+
+conditions                      | trigger        |  consequents
+°FSM    °switch   °plug         |                |  °FSM    °switch   °plug
+————————————————————————————————————————————————————————————————————————————————————
+:IDLE   ---       ---           | °FSM^START     |  :ACTIVE ---       ---
+---     :off      ---           | °switch^toggle |  ---     :on       ---
+---     :on       ---           | °switch^toggle |  ---     :off      ---
+---     ---       :disconnected | °plug^insert   |  ---     ---       :inserted
+---     ---       :inserted     | °plug^pull     |  ---     ---       :disconnected
+
+```
 
 
 
