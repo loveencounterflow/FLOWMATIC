@@ -39,22 +39,8 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
-# image folders
-public
-public/uploads
-public/processing
-public/downloads
-public/trash
 
-sessions.db
-state.json
 
-postgrest
-
-*.js.map
-_extras
-.cache
-__pycache__
 # python_modules/__pycache__
 # python_modules/tests/__pycache__
 
