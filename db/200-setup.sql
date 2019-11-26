@@ -344,6 +344,88 @@ phrase that requires the phrase in its notational form, as in ''°power:on, °bu
 by commas; spaces may appear between terms and around the arrow, but not inside terms.';
 
 
+
+-- =========================================================================================================
+--
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.reset() returns void volatile language plpgsql as $$
+  -- Reset all values to their defaults
+  begin
+    perform log( '^FM_FSM.reset^' );
+    insert into FM.journal  ( topic, focus, kind, remark )
+      select                  topic, focus, kind, 'RESET'
+      from FM.pairs
+      where dflt; -- `kind = 'state'` is implicit for `dflt = true`
+    -- ### TAINT consider to actually use entries in `transition_phrases`:
+    insert into FM.journal  ( topic,  focus,      kind,     remark  ) values
+                            ( '°FSM', ':ACTIVE',  'state',  'RESET' );
+    end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.record_unmatched_event( ¶row FM.queue ) returns void volatile language plpgsql as $$
+  begin
+    insert into FM.journal ( topic, focus, remark ) values ( ¶row.topic, ¶row.focus, 'UNPROCESSED' );
+    end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.move_queued_event_to_journal( ¶row FM.queue, ¶remark text )
+  returns void volatile language plpgsql as $$
+  begin
+    delete from FM.queue where id = ¶row.id;
+    insert into FM.journal ( topic, focus, kind, remark ) values ( ¶row.topic, ¶row.focus, 'event', ¶remark );
+    end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.match_event( ¶row FM.queue )
+  returns text volatile language plpgsql as $$
+  declare
+    ¶remark       text  :=  'RESOLVED';
+    ¶transitions  record;
+  begin
+    perform log( '^388799^', ¶row::text );
+    ¶remark :=  'UNPROCESSED';
+    -- for ¶transitions in
+    --   select csqt_topics, csqt_focuses
+    --     from FM.transition_phrases
+    --       where true
+    --         and topic = ¶row.topic
+    --         and focus = ¶row.focus
+    --   loop
+    --     perform log( '^3877^', transitions::text );
+    --     end loop;
+    return ¶remark;
+    end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+/* ### TAINT  when used as an actual queue, should not trigger on insert but run independently, possibly
+              using external clok. */
+create function FM.on_after_insert_into_fm_eventqueue() returns trigger language plpgsql as $$
+  declare
+    ¶event    text  :=  null;
+    ¶remark   text  :=  'RESOLVED';
+  begin
+    ¶event  := new.topic || new.focus;
+    perform log( '^6643^', new::text );
+    perform log( '^6643^', new.topic::text );
+    perform log( '^6643^', new.focus::text );
+    perform log( '^6643^', pg_typeof( new )::text );
+    -- .....................................................................................................
+    case ¶event
+      when '°FSM^RESET' then
+        perform FM_FSM.reset();
+        perform FM_FSM.move_queued_event_to_journal( new, ¶remark );
+      else                    ¶remark :=  FM_FSM.match_event( new );
+      -- else                    ¶remark :=  'UNPROCESSED';
+      end case;
+    -- .....................................................................................................
+    return null;
+    end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create trigger on_after_insert_into_fm_eventqueue after insert on FM.queue
+  for each row execute procedure FM.on_after_insert_into_fm_eventqueue();
+
+
 -- =========================================================================================================
 -- INITIAL DATA
 -- ---------------------------------------------------------------------------------------------------------
