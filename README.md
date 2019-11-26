@@ -442,6 +442,24 @@ Components:
 * after state transition has been performed, any number of *moves* ('future events') may be queued
 * possible to declare transitions without conditions but with event
 * possible to declare transitions without consequents but with one or more moves
+* *conflict resolution*: more than a single phrase may match given at any step.
+  * All matching phrases are activated in the order defined;
+  * when resolving,
+    * all consequents of all phrases will be set, in the order of their declaration
+    * all moves of all phrases will be queued, in the order of their declaration.
+  * There *may* be later a way to avoid queueing duplicate, non-initial or non-final moves should the need
+    arise. Until then, *each matching premise instates and evokes all the terms and moves of the RHS*.
+
+```
+┌─────────────────────────────────────────────┐
+│                    phrase                   │
+├──────────────────────┬──────────────────────┤
+│   premise, LHS       │       effect, RHS    │
+├───────────┬──────────┼──────────────┬───────┤
+│conditions │ trigger  │  consequents │ moves │
+└───────────┴──────────┴──────────────┴───────┘
+```
+
 
 > An event is what causes a state machine to transition from its current state to its next state. All state
 > transitions in a state machine are due to these events; state cannot change unless some stimulus (the
