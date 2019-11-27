@@ -17,11 +17,6 @@ drop schema if exists X cascade;
 \set filename 200-setup.test.sql
 \pset pager on
 
-select * from FM.atoms;
-select * from FM.pairs;
-select * from FM.transition_phrases;
-select * from FM.transition_phrases_spread;
-xxx
 
 
 -- ---------------------------------------------------------------------------------------------------------
@@ -64,48 +59,52 @@ do $$ begin
   -- perform FM.add_default_state(  '°switch:off', 'the power button is in ''off'' position' );
   -- perform FM.add_state(          '°switch:on',  'the power button is in ''on'' position'  );
   -- perform FM.add_event(          '°switch^toggle',  'press or release the power button'       );
-  -- -------------------------------------------------------------------------------------------------------
-  -- perform FM.add_transition( '  °switch:off, °switch^toggle => °switch:on  ' );
-  -- perform FM.add_transition( '°switch:off, °switch^toggle => °switch:on' );
-  perform FM.add_transition( '°switch:off,°switch^toggle        => °switch:on'                        );
-  perform FM.add_transition( '°switch:on,°switch^toggle         => °switch:off'                       );
-  -- perform FM.add_transition( '°switch:on,°power:on              => °indicator:on'                     );
-  -- perform FM.add_transition( '°switch:off                       => °indicator:off'                    );
-  -- perform FM.add_transition( '°power:off                        => °indicator:off'                    );
-  -- perform FM.add_transition( '°plug:inserted,°plug^pull         => °plug:disconnected'                );
-  -- perform FM.add_transition( '°plug:disconnected,°plug^insert   => °plug:inserted'                    );
-  -- perform FM.add_transition( '°plug:inserted,°switch:on         => °power:on'                         );
-  perform FM.add_transition( '°plug:disconnected                => °power:off'                        );
-  perform FM.add_transition( '°switch:off                       => °power:off'                        );
-  -- perform FM.add_transition( '°c1:a1,°c2,a2                  => °c3:foo'                           );
-  -- perform FM.add_transition( '°c1:a1,°c2,a2,^FSM:^TICK       => °c3:foo'                           );
+  -- -- -------------------------------------------------------------------------------------------------------
+  -- -- perform FM.add_transition( '  °switch:off, °switch^toggle => °switch:on  ' );
+  -- -- perform FM.add_transition( '°switch:off, °switch^toggle => °switch:on' );
+  -- perform FM.add_transition( '°switch:off,°switch^toggle        => °switch:on'                        );
+  -- perform FM.add_transition( '°switch:on,°switch^toggle         => °switch:off'                       );
+  -- -- perform FM.add_transition( '°switch:on,°power:on              => °indicator:on'                     );
+  -- -- perform FM.add_transition( '°switch:off                       => °indicator:off'                    );
+  -- -- perform FM.add_transition( '°power:off                        => °indicator:off'                    );
+  -- -- perform FM.add_transition( '°plug:inserted,°plug^pull         => °plug:disconnected'                );
+  -- -- perform FM.add_transition( '°plug:disconnected,°plug^insert   => °plug:inserted'                    );
+  -- -- perform FM.add_transition( '°plug:inserted,°switch:on         => °power:on'                         );
+  -- perform FM.add_transition( '°plug:disconnected                => °power:off'                        );
+  -- perform FM.add_transition( '°switch:off                       => °power:off'                        );
+  -- -- perform FM.add_transition( '°c1:a1,°c2,a2                  => °c3:foo'                           );
+  -- -- perform FM.add_transition( '°c1:a1,°c2,a2,^FSM:^TICK       => °c3:foo'                           );
   end; $$;
 
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
--- -- .........................................................................................................
--- \echo :reverse:steel FM.kinds            :reset
--- select * from FM.kinds;
--- -- .........................................................................................................
--- \echo :reverse:steel FM.atoms            :reset
--- select * from FM.atoms;
 -- .........................................................................................................
-\echo :reverse:steel FM.pairs            :reset
+\echo :reverse:steel FM.atoms :reset
+select * from FM.atoms;
+-- .........................................................................................................
+\echo :reverse:steel FM.pairs :reset
 select * from FM.pairs;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases            :reset
+\echo :reverse:steel FM.transition_phrases :reset
 select * from FM.transition_phrases;
---- -- .........................................................................................................
--- \echo :reverse:steel FM.queue            :reset
--- select * from FM.queue;
-insert into FM.queue ( topic, focus ) values ( '°FSM', '^RESET' );
--- insert into FM.queue ( topic, focus ) values ( '°FSM', '^START' );
-insert into FM.queue ( topic, focus ) values ( '°switch', '^toggle' );
+-- .........................................................................................................
+\echo :reverse:steel FM.transition_phrases_spread :reset
+select * from FM.transition_phrases_spread;
+-- .........................................................................................................
+\echo :reverse:steel FM.queue :reset
+select * from FM.queue;
+-- .........................................................................................................
+\echo :reverse:steel FM.statejournal :reset
+select * from FM.statejournal;
+
+insert into FM.queue ( event ) values ( '°FSM^RESET' );
+-- insert into FM.queue ( event ) values ( '°FSM^START' );
+insert into FM.queue ( event ) values ( '°switch^toggle' );
 
 -- .........................................................................................................
-\echo :reverse:steel FM.journal            :reset
-select * from FM.journal;
+\echo :reverse:steel FM.statejournal            :reset
+select * from FM.statejournal;
 -- .........................................................................................................
 \echo :reverse:steel FM.transition_phrases_spread            :reset
 select * from FM.transition_phrases_spread;
@@ -118,6 +117,10 @@ select * from FM.current_event;
 -- .........................................................................................................
 \echo :reverse:steel FM.current_journal            :reset
 select * from FM.current_journal;
+
+/* ###################################################################################################### */
+\echo :red ———{ :filename 10 }———:reset
+\quit
 
 -- ### NOTE also possible to formulate as `where id in ( select id from current_event )`
 -- view on all condition clauses that contain current event:
@@ -158,10 +161,6 @@ select * from FM.intersection_of_current_states_and_transitions;
 --   ( array[ '42', 'true' ]::jsonb[] );
 -- select * from FM.predicates;
 
-
-/* ###################################################################################################### */
-\echo :red ———{ :filename 10 }———:reset
-\quit
 
 -- select * from FACTORS._010_factors;
 -- select * from FACTORS.factors;
