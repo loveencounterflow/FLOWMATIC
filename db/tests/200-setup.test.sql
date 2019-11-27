@@ -133,6 +133,15 @@ select * from FM.statejournal;
 -- .........................................................................................................
 \echo :reverse:steel FM.current_state            :reset
 select * from FM.current_state;
+-- .........................................................................................................
+\echo :reverse:steel FM.eventjournal            :reset
+select * from FM.eventjournal;
+-- .........................................................................................................
+\echo :reverse:steel FM.queue            :reset
+select * from FM.queue;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_transition_effects            :reset
+select * from FM.current_transition_effects;
 
 -- select
 --     phrase.phrasid,
