@@ -93,6 +93,9 @@ do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
 \echo :reverse:steel FM.queue            :reset
 select * from FM.queue;
 -- .........................................................................................................
+\echo :reverse:steel FM.eventjournal            :reset
+select * from FM.eventjournal;
+-- .........................................................................................................
 \echo :reverse:steel FM.statejournal            :reset
 select * from FM.statejournal;
 -- .........................................................................................................
@@ -104,9 +107,9 @@ select * from FM.current_state;
 -- .........................................................................................................
 \echo :reverse:steel FM.current_event            :reset
 select * from FM.current_event;
--- .........................................................................................................
-\echo :reverse:steel FM.current_journal            :reset
-select * from FM.current_journal;
+-- -- .........................................................................................................
+-- \echo :reverse:steel FM.current_journal            :reset
+-- select * from FM.current_journal;
 
 /* ###################################################################################################### */
 \echo :red ———{ :filename 10 }———:reset
