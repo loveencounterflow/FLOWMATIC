@@ -106,7 +106,7 @@ create table FM.pairs (
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
-create table FM.transition_phrases (
+create table FM._transition_phrases (
   -- ### TAINT check that arrays contain unique values
   -- ### TAINT check that each array elements satisfies foreign key reference to FM.pairs
   -- ### TAINT add non-null, uniqueness constraints
@@ -118,8 +118,8 @@ create table FM.transition_phrases (
     );
 
 -- ---------------------------------------------------------------------------------------------------------
--- The standard-relational version of FM.transition_phrases`:
-create view FM.transition_phrases_spread as ( select
+-- The standard-relational version of FM._transition_phrases`:
+create view FM.transition_phrases as ( select
     TP.phrasid                  as phrasid,
     cond.nr                     as cond_nr,
     cond.state                  as cond,
@@ -127,10 +127,10 @@ create view FM.transition_phrases_spread as ( select
     TP.trgg                     as trgg,
     TP.csqts                    as csqts,
     TP.moves                    as moves
-  from FM.transition_phrases as TP,
+  from FM._transition_phrases as TP,
   lateral unnest( conds ) with ordinality cond ( state, nr ) );
 
--- insert into FM.transition_phrases
+-- insert into FM._transition_phrases
 --   ( conds,                trgg,         csqts,                  moves ) values
 --     ( array[ '°FSM:IDLE' ], '°FSM^START', array[ '°FSM:ACTIVE' ], null ),
 --     ( array[ '°FSM:IDLE', '°FSM:BLAH' ], '°FSM^RESET', array[ '°FSM:WAITING' ], null );
@@ -189,7 +189,7 @@ create view FM.current_transition_effects as ( select distinct
     phrasid,
     csqts,
     moves
-  from FM.transition_phrases_spread
+  from FM.transition_phrases
   where true
     and cond in ( select state from FM.current_state )
     and trgg in ( select event from FM.current_event )
@@ -230,7 +230,7 @@ create function FM_FSM.reset() returns void volatile language plpgsql as $$
       select                      topic, focus, topic || focus, 'RESET'
       from FM.pairs
       where dflt;
-    -- ### TAINT consider to actually use entries in `transition_phrases`:
+    -- ### TAINT consider to actually use entries in `_transition_phrases`:
     insert into FM.statejournal ( topic,  focus,      state,          remark  ) values
                                 ( '°FSM', ':ACTIVE',  '°FSM:ACTIVE',  'RESET' );
     end; $$;
@@ -329,7 +329,7 @@ will be thrown.';
 create function FM.add_transition( ¶conds text[], ¶trgg FM_TYPES.action, ¶csqts text[], ¶moves text[] )
   returns void volatile language plpgsql as $$
   begin
-    insert into FM.transition_phrases ( conds, trgg, csqts, moves ) values
+    insert into FM._transition_phrases ( conds, trgg, csqts, moves ) values
       ( ¶conds, ¶trgg, ¶csqts, ¶moves );
   end; $$;
 

@@ -78,11 +78,11 @@ select * from FM.atoms;
 \echo :reverse:steel FM.pairs :reset
 select * from FM.pairs;
 -- .........................................................................................................
+\echo :reverse:steel FM._transition_phrases :reset
+select * from FM._transition_phrases;
+-- .........................................................................................................
 \echo :reverse:steel FM.transition_phrases :reset
 select * from FM.transition_phrases;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases_spread :reset
-select * from FM.transition_phrases_spread;
 -- .........................................................................................................
 \echo :reverse:steel FM.queue :reset
 select * from FM.queue;
@@ -104,8 +104,8 @@ select * from FM.eventjournal;
 \echo :reverse:steel FM.statejournal            :reset
 select * from FM.statejournal;
 -- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases_spread            :reset
-select * from FM.transition_phrases_spread;
+\echo :reverse:steel FM.transition_phrases            :reset
+select * from FM.transition_phrases;
 -- .........................................................................................................
 \echo :reverse:steel FM.current_state            :reset
 select * from FM.current_state;
@@ -159,7 +159,7 @@ select * from FM.current_transition_effects;
 \echo :reverse:yellow candidate transition phrases (based on current event) :reset
 select
     transition.*
-  from FM.transition_phrases_spread as transition
+  from FM.transition_phrases as transition
   join FM.current_event             as event on ( true
     and transition.cond_topic = event.topic
     and transition.cond_focus = event.focus );
@@ -167,10 +167,10 @@ select
 \echo :reverse:yellow relevant transition phrases :reset
 select
     *
-  from FM.transition_phrases_spread as transition
+  from FM.transition_phrases as transition
   -- join FM.current_journal           as current on ( transition.cond_topic = current.topic )
   where transition.phrasid in ( select phrasid
-    from FM.transition_phrases_spread as transition
+    from FM.transition_phrases as transition
     where true
       and ( transition.cond_topic = '°switch' )
       and ( transition.cond_focus = ':off' )
@@ -180,7 +180,7 @@ select
 
 create view FM.intersection_of_current_states_and_transitions as ( select
     clause.*
-  from FM.transition_phrases_spread as clause
+  from FM.transition_phrases as clause
   join FM.current_state            as state on ( true
     and clause.cond_topic = state.topic
     and clause.cond_focus = state.focus )
