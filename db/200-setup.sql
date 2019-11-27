@@ -222,7 +222,7 @@ create function FM_FSM.reset() returns void volatile language plpgsql as $$
 --     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
-create function FM_FSM.move_queued_event_to_eventjournal( ¶row FM.queue, ¶remark text )
+create function FM_FSM.move_event_from_queue_to_eventjournal( ¶row FM.queue, ¶remark text )
   returns void volatile language plpgsql as $$
   begin
     delete from FM.queue where id = ¶row.id;
@@ -262,8 +262,11 @@ create function FM.on_after_insert_into_fm_eventqueue() returns trigger language
     case new.event
       when '°FSM^RESET' then
         perform FM_FSM.reset();
-        perform FM_FSM.move_queued_event_to_eventjournal( new, ¶remark );
-      else                    ¶remark :=  FM_FSM.match_event( new );
+        perform FM_FSM.move_event_from_queue_to_eventjournal( new, ¶remark );
+      else
+        ¶remark :=  FM_FSM.match_event( new );
+        perform log( '^95565^', new::text, ¶remark::text );
+        perform FM_FSM.move_event_from_queue_to_eventjournal( new, ¶remark );
       -- else                    ¶remark :=  'UNPROCESSED';
       end case;
     -- .....................................................................................................
