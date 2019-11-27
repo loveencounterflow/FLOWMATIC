@@ -469,7 +469,11 @@ Mnemonic:
 
 ```
 transition phrase := IF °con:ditions WHEN °e^vent THEN °con:sequents QUEUE °mo^ves
-transition phrase := match °con:dition1, °con:dition2 waitfor °e^vent then apply °con:sequent1, °con:sequent2 send °mo^ve1, °mo^ve2
+transition phrase :=
+  match °con:dition1, °con:dition2
+    waitfor °e^vent
+    apply   °con:sequent1, °con:sequent2
+    emit    °mo^ve1, °mo^ve2
 ```
 
 > A transition phrase declares, on the left hand side, a number of state conditions to be met and exactly

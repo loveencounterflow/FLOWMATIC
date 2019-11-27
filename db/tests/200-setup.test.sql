@@ -60,20 +60,8 @@ do $$ begin
   -- perform FM.add_state(          '°switch:on',  'the power button is in ''on'' position'  );
   -- perform FM.add_event(          '°switch^toggle',  'press or release the power button'       );
   -- -- -------------------------------------------------------------------------------------------------------
-  -- -- perform FM.add_transition( '  °switch:off, °switch^toggle => °switch:on  ' );
-  -- -- perform FM.add_transition( '°switch:off, °switch^toggle => °switch:on' );
-  -- perform FM.add_transition( '°switch:off,°switch^toggle        => °switch:on'                        );
-  -- perform FM.add_transition( '°switch:on,°switch^toggle         => °switch:off'                       );
-  -- -- perform FM.add_transition( '°switch:on,°power:on              => °indicator:on'                     );
-  -- -- perform FM.add_transition( '°switch:off                       => °indicator:off'                    );
-  -- -- perform FM.add_transition( '°power:off                        => °indicator:off'                    );
-  -- -- perform FM.add_transition( '°plug:inserted,°plug^pull         => °plug:disconnected'                );
-  -- -- perform FM.add_transition( '°plug:disconnected,°plug^insert   => °plug:inserted'                    );
-  -- -- perform FM.add_transition( '°plug:inserted,°switch:on         => °power:on'                         );
-  -- perform FM.add_transition( '°plug:disconnected                => °power:off'                        );
-  -- perform FM.add_transition( '°switch:off                       => °power:off'                        );
-  -- -- perform FM.add_transition( '°c1:a1,°c2,a2                  => °c3:foo'                           );
-  -- -- perform FM.add_transition( '°c1:a1,°c2,a2,^FSM:^TICK       => °c3:foo'                           );
+  perform FM.add_transition( '°switch:off', '°switch^toggle', '°switch:on'                        );
+  perform FM.add_transition( '°switch:on',  '°switch^toggle', '°switch:off'                        );
   end; $$;
 
 
@@ -98,10 +86,12 @@ select * from FM.queue;
 \echo :reverse:steel FM.statejournal :reset
 select * from FM.statejournal;
 
-insert into FM.queue ( event ) values ( '°FSM^RESET' );
--- insert into FM.queue ( event ) values ( '°FSM^START' );
-insert into FM.queue ( event ) values ( '°switch^toggle' );
+do $$ begin perform FM.emit( '°FSM^RESET' );     end; $$;
+do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
 
+-- .........................................................................................................
+\echo :reverse:steel FM.queue            :reset
+select * from FM.queue;
 -- .........................................................................................................
 \echo :reverse:steel FM.statejournal            :reset
 select * from FM.statejournal;
@@ -109,8 +99,8 @@ select * from FM.statejournal;
 \echo :reverse:steel FM.transition_phrases_spread            :reset
 select * from FM.transition_phrases_spread;
 -- .........................................................................................................
-\echo :reverse:steel FM.current_states            :reset
-select * from FM.current_states;
+\echo :reverse:steel FM.current_state            :reset
+select * from FM.current_state;
 -- .........................................................................................................
 \echo :reverse:steel FM.current_event            :reset
 select * from FM.current_event;
@@ -149,7 +139,7 @@ select
 create view FM.intersection_of_current_states_and_transitions as ( select
     clause.*
   from FM.transition_phrases_spread as clause
-  join FM.current_states            as state on ( true
+  join FM.current_state            as state on ( true
     and clause.cond_topic = state.topic
     and clause.cond_focus = state.focus )
   );
