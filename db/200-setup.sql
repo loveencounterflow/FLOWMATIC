@@ -166,7 +166,7 @@ create table FM.statejournal (
   foreign key ( state ) references FM.pairs ( pair ),
   constraint "state must be concatenation of topic and focus" check ( state = topic || focus ) );
 
--- .........................................................................................................
+-- ---------------------------------------------------------------------------------------------------------
 -- ### TAINT not clear whether ID or timestamp should be used to find current state
 create view FM.current_state as ( select
     id            as id,
@@ -179,12 +179,30 @@ create view FM.current_state as ( select
       max( id ) over ( partition by topic ) as id
     from FM.statejournal ) );
 
--- .........................................................................................................
+-- ---------------------------------------------------------------------------------------------------------
 -- current event is oldest event in queue
 create view FM.current_event as ( select *
   from FM.queue where id = ( select min( id ) as id from FM.queue ) );
 
--- .........................................................................................................
+-- -- ---------------------------------------------------------------------------------------------------------
+-- create view FM.transition_phrases_with_current_event as ( select *
+--   from FM.transition_phrases_spread
+--   where trgg = ( select event from FM.current_event ) );
+
+-- -- ---------------------------------------------------------------------------------------------------------
+-- create view FM.transition_phrases_with_current_state as ( select *
+--   from FM.transition_phrases_spread
+--   where cond in ( select state from FM.current_state ) );
+
+-- ---------------------------------------------------------------------------------------------------------
+create view FM.current_transition_phrases as ( select *
+  from FM.transition_phrases_spread
+  where true
+    and cond in ( select state from FM.current_state )
+    and trgg in ( select event from FM.current_event )
+    order by phrasid, cond_nr );
+
+-- ---------------------------------------------------------------------------------------------------------
 -- ### TAINT bringing together two independant IDs from 2 tables
 create view FM.journal as (
   ( select id, t, topic, focus, state, 'state', remark from FM.current_state ) union all
@@ -251,31 +269,26 @@ create function FM_FSM.match_event( ¶row FM.queue )
     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
-/* ### TAINT  when used as an actual queue, should not trigger on insert but run independently, possibly
-              using external clok. */
-create function FM.on_after_insert_into_fm_eventqueue() returns trigger language plpgsql as $$
+create function FM.process_current_event() returns void language plpgsql as $$
   declare
+    ¶row      FM.queue;
     ¶remark   text  :=  'RESOLVED';
   begin
-    perform log( '^6643^', new::text );
+    select * from FM.current_event limit 1 into ¶row;
+    perform log( '^6643^', ¶row::text );
     -- .....................................................................................................
-    case new.event
+    case ¶row.event
       when '°FSM^RESET' then
         perform FM_FSM.reset();
-        perform FM_FSM.move_event_from_queue_to_eventjournal( new, ¶remark );
+        perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
       else
-        ¶remark :=  FM_FSM.match_event( new );
-        perform log( '^95565^', new::text, ¶remark::text );
-        perform FM_FSM.move_event_from_queue_to_eventjournal( new, ¶remark );
+        ¶remark :=  FM_FSM.match_event( ¶row );
+        perform log( '^95565^', ¶row::text, ¶remark::text );
+        perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
       -- else                    ¶remark :=  'UNPROCESSED';
       end case;
     -- .....................................................................................................
-    return null;
     end; $$;
-
--- ---------------------------------------------------------------------------------------------------------
-create trigger on_after_insert_into_fm_eventqueue after insert on FM.queue
-  for each row execute procedure FM.on_after_insert_into_fm_eventqueue();
 
 
 -- =========================================================================================================

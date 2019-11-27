@@ -62,6 +62,8 @@ do $$ begin
   -- -- -------------------------------------------------------------------------------------------------------
   perform FM.add_transition( '°switch:off', '°switch^toggle', '°switch:on'                        );
   perform FM.add_transition( '°switch:on',  '°switch^toggle', '°switch:off'                        );
+  perform FM.add_transition( '°indicator:off', '°indicator^toggle', '°indicator:on'                        );
+  perform FM.add_transition( '°indicator:on',  '°indicator^toggle', '°indicator:off'                        );
   end; $$;
 
 
@@ -87,6 +89,7 @@ select * from FM.queue;
 select * from FM.statejournal;
 
 do $$ begin perform FM.emit( '°FSM^RESET' );     end; $$;
+do $$ begin perform FM.process_current_event();  end; $$;
 do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
 
 -- .........................................................................................................
@@ -108,8 +111,14 @@ select * from FM.current_state;
 \echo :reverse:steel FM.current_event            :reset
 select * from FM.current_event;
 -- -- .........................................................................................................
--- \echo :reverse:steel FM.current_journal            :reset
--- select * from FM.current_journal;
+-- \echo :reverse:steel FM.transition_phrases_with_current_event            :reset
+-- select * from FM.transition_phrases_with_current_event;
+-- -- .........................................................................................................
+-- \echo :reverse:steel FM.transition_phrases_with_current_state            :reset
+-- select * from FM.transition_phrases_with_current_state;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_transition_phrases            :reset
+select * from FM.current_transition_phrases;
 
 /* ###################################################################################################### */
 \echo :red ———{ :filename 10 }———:reset
