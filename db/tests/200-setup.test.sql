@@ -17,6 +17,13 @@ drop schema if exists X cascade;
 \set filename 200-setup.test.sql
 \pset pager on
 
+select * from FM.atoms;
+select * from FM.pairs;
+select * from FM.transition_phrases;
+select * from FM.transition_phrases_spread;
+xxx
+
+
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
 do $$ begin
