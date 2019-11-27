@@ -184,23 +184,32 @@ create view FM.current_state as ( select
 create view FM.current_event as ( select *
   from FM.queue where id = ( select min( id ) as id from FM.queue ) );
 
--- -- ---------------------------------------------------------------------------------------------------------
--- create view FM.transition_phrases_with_current_event as ( select *
---   from FM.transition_phrases_spread
---   where trgg = ( select event from FM.current_event ) );
-
--- -- ---------------------------------------------------------------------------------------------------------
--- create view FM.transition_phrases_with_current_state as ( select *
---   from FM.transition_phrases_spread
---   where cond in ( select state from FM.current_state ) );
-
 -- ---------------------------------------------------------------------------------------------------------
-create view FM.current_transition_phrases as ( select *
+create view FM.current_transition_effects as ( select distinct
+    phrasid,
+    csqts,
+    moves
   from FM.transition_phrases_spread
   where true
     and cond in ( select state from FM.current_state )
     and trgg in ( select event from FM.current_event )
-    order by phrasid, cond_nr );
+    order by phrasid );
+
+-- ---------------------------------------------------------------------------------------------------------
+create materialized view FM._current_transition_state_effects as ( select
+      phrase.phrasid    as phrasid,
+      csqt.state_nr     as state_nr,
+      tf[ 1 ]           as topic,
+      tf[ 2 ]           as focus,
+      csqt.state        as state
+    from FM.current_transition_effects as phrase,
+    lateral unnest( phrase.csqts ) with ordinality      as csqt ( state, state_nr ),
+    lateral regexp_match( csqt.state, '^(.+)(:.+)$' )   as tf
+    order by phrase.phrasid, csqt.state_nr
+  ) with no data;
+
+comment on materialized view FM._current_transition_state_effects is 'Table to temporarily hold effects
+valid for current transition.';
 
 -- ---------------------------------------------------------------------------------------------------------
 -- ### TAINT bringing together two independant IDs from 2 tables
@@ -208,13 +217,6 @@ create view FM.journal as (
   ( select id, t, topic, focus, state, 'state', remark from FM.current_state ) union all
   ( select id, t, null,   null, event, 'event', null   from FM.current_event )
   order by topic, focus );
-
--- -- .........................................................................................................
--- -- ### TAINT bringing together two independant IDs from 2 tables
--- create view FM.current_journal as (
---   ( select id, t, topic, focus, state, 'state', remark from FM.current_state ) union all
---   ( select id, t, null,   null, event, 'event', null   from FM.current_event )
---   order by topic, focus );
 
 
 -- =========================================================================================================
@@ -248,23 +250,21 @@ create function FM_FSM.move_event_from_queue_to_eventjournal( ¶row FM.queue, ¶
     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
-create function FM_FSM.match_event( ¶row FM.queue )
+create function FM_FSM.apply_current_effects( ¶row FM.queue )
   returns text volatile language plpgsql as $$
   declare
     ¶remark       text  :=  'RESOLVED';
-    ¶transitions  record;
+    ¶effect       record;
   begin
-    perform log( '^388799^', ¶row::text );
-    ¶remark :=  'UNPROCESSED';
-    -- for ¶transitions in
-    --   select csqt_topics, csqt_focuses
-    --     from FM.transition_phrases
-    --       where true
-    --         and topic = ¶row.topic
-    --         and focus = ¶row.focus
-    --   loop
-    --     perform log( '^3877^', transitions::text );
-    --     end loop;
+    -- perform log( '^388799^', ¶row::text );
+    -- ### TAINT consider to use temporary table as that will not get persisted
+    refresh materialized view FM._current_transition_state_effects;
+    for ¶effect in select * from FM._current_transition_state_effects loop
+      -- perform log( '^388800^', ¶effect::text );
+      insert into FM.statejournal ( topic, focus, state, remark )
+        values ( ¶effect.topic, ¶effect.focus, ¶effect.state, ¶remark );
+      end loop;
+    -- ¶remark       :=  'UNPROCESSED';
     return ¶remark;
     end; $$;
 
@@ -282,8 +282,7 @@ create function FM.process_current_event() returns void language plpgsql as $$
         perform FM_FSM.reset();
         perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
       else
-        ¶remark :=  FM_FSM.match_event( ¶row );
-        perform log( '^95565^', ¶row::text, ¶remark::text );
+        ¶remark :=  FM_FSM.apply_current_effects( ¶row );
         perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
       -- else                    ¶remark :=  'UNPROCESSED';
       end case;

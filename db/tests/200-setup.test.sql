@@ -61,6 +61,8 @@ do $$ begin
   -- perform FM.add_event(          '°switch^toggle',  'press or release the power button'       );
   -- -- -------------------------------------------------------------------------------------------------------
   perform FM.add_transition( '°switch:off', '°switch^toggle', '°switch:on'                        );
+  perform FM.add_transition( '°switch:off,°power:off', '°switch^toggle', '°switch:on,°power:on', '°FSM^HELO'                        );
+  -- perform FM.add_transition( '°switch:off,°power:off', '°switch^toggle', '°switch:off,°power:on', '°FSM^HELO'                        );
   perform FM.add_transition( '°switch:on',  '°switch^toggle', '°switch:off'                        );
   perform FM.add_transition( '°indicator:off', '°indicator^toggle', '°indicator:on'                        );
   perform FM.add_transition( '°indicator:on',  '°indicator^toggle', '°indicator:off'                        );
@@ -117,8 +119,27 @@ select * from FM.current_event;
 -- \echo :reverse:steel FM.transition_phrases_with_current_state            :reset
 -- select * from FM.transition_phrases_with_current_state;
 -- .........................................................................................................
-\echo :reverse:steel FM.current_transition_phrases            :reset
-select * from FM.current_transition_phrases;
+\echo :reverse:steel FM.current_transition_effects            :reset
+select * from FM.current_transition_effects;
+
+do $$ begin perform FM.process_current_event();  end; $$;
+
+-- .........................................................................................................
+\echo :reverse:steel FM._current_transition_state_effects            :reset
+select * from FM._current_transition_state_effects;
+-- .........................................................................................................
+\echo :reverse:steel FM.statejournal            :reset
+select * from FM.statejournal;
+-- .........................................................................................................
+\echo :reverse:steel FM.current_state            :reset
+select * from FM.current_state;
+
+-- select
+--     phrase.phrasid,
+--     phrase.
+--     csqt
+--   from FM._current_transition_state_effects as phrase
+--   lateral u
 
 /* ###################################################################################################### */
 \echo :red ———{ :filename 10 }———:reset
