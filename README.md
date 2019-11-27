@@ -450,6 +450,10 @@ Components:
   * There *may* be later a way to avoid queueing duplicate, non-initial or non-final moves should the need
     arise. Until then, *each matching premise instates and evokes all the terms and moves of the RHS*.
 
+* consider to abolish (all?) sigils, use path notation, write e.g. `switch/on` for state, `switch/on()`
+  (with arguments within parens: `console/print(text:"x")`) for events, square brackets (?) for
+  multifacetted and continuous values e.g. `cpu1/temp[47°C]`; possibly use paths to denote nested machines
+
 ```
 ┌─────────────────────────────────────────────┐
 │                    phrase                   │
