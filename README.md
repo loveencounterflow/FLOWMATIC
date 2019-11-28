@@ -564,8 +564,6 @@ conditions                      | trigger        |  consequents
 
 ## Configuration
 
-**NOTE** not yet implemented
-
 in `intershop.ptv`:
 
 ```
