@@ -697,5 +697,7 @@ get more involved, so let's keep the conceptually simpler model for the time bei
 # To Do
 
 * [ ] declaring pairs should be enough to implicitly declare atoms
-
+* [ ] allow default / unnamed component, actions without component
+* [ ] implement moves on state enter, exit
+* [ ] build transitions view that links states with events
 
