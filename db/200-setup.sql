@@ -384,9 +384,17 @@ create function FM.add_pair(
   -- ### TAINT consider to split into two functions to add states, actions
   -- ### TAINT should check that kind and sigil match
   returns boolean volatile language plpgsql as $$
+  declare
+    ¶pair         FM_TYPES.pair :=  ¶topic || ¶focus;
+    ¶focus_kind   text;
   begin
+    if ¶( 'flowmatic/atoms/autocreate' )::boolean then
+      case ¶kind when 'action' then ¶focus_kind := 'verb'; else ¶focus_kind := 'aspect'; end case;
+      insert into FM.atoms ( atom, kind ) values ( ¶topic, 'component' ) on conflict do nothing;
+      insert into FM.atoms ( atom, kind ) values ( ¶focus, ¶focus_kind ) on conflict do nothing;
+      end if;
     insert into FM.pairs ( topic, focus, pair, kind, dflt, comment ) values
-      ( ¶topic, ¶focus, ¶topic || ¶focus, ¶kind, ¶dflt, ¶comment );
+      ( ¶topic, ¶focus, ¶pair, ¶kind, ¶dflt, ¶comment );
     return found;
   end; $$;
 

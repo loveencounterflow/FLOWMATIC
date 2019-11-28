@@ -22,16 +22,16 @@ drop schema if exists X cascade;
 \echo :signal ———{ :filename 2 }———:reset
 do $$ begin
   -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_atom( '°s',              'component',  'default component'                               );
-  perform FM.add_atom( '°bell',           'component',  'attention grabber'                               );
-  perform FM.add_atom( '^zero',           'verb',       'digit 0 coming up'                               );
-  perform FM.add_atom( '^one',            'verb',       'digit 1 coming up'                               );
-  perform FM.add_atom( '^ring',           'verb',       'make noise'                                      );
-  -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_atom( ':even0_even1',    'aspect',     'even # of 0s, even # of 1s'                      );
-  perform FM.add_atom( ':even0_odd1',     'aspect',     'even # of 0s, odd # of 1s'                       );
-  perform FM.add_atom( ':odd0_even1',     'aspect',     'odd # of 0s, even # of 1s'                       );
-  perform FM.add_atom( ':odd0_odd1',      'aspect',     'odd # of 0s, odd # of 1s'                        );
+  -- perform FM.add_atom( '°s',              'component',  'default component'                               );
+  -- perform FM.add_atom( '°bell',           'component',  'attention grabber'                               );
+  -- perform FM.add_atom( '^zero',           'verb',       'digit 0 coming up'                               );
+  -- perform FM.add_atom( '^one',            'verb',       'digit 1 coming up'                               );
+  -- perform FM.add_atom( '^ring',           'verb',       'make noise'                                      );
+  -- -- -------------------------------------------------------------------------------------------------------
+  -- perform FM.add_atom( ':even0_even1',    'aspect',     'even # of 0s, even # of 1s'                      );
+  -- perform FM.add_atom( ':even0_odd1',     'aspect',     'even # of 0s, odd # of 1s'                       );
+  -- perform FM.add_atom( ':odd0_even1',     'aspect',     'odd # of 0s, even # of 1s'                       );
+  -- perform FM.add_atom( ':odd0_odd1',      'aspect',     'odd # of 0s, odd # of 1s'                        );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_pair( '°s',              ':even0_even1', 'state',  true,   'even # of 0s, even # of 1s'  );
   perform FM.add_pair( '°s',              ':even0_odd1',  'state',  false,  'even # of 0s, odd # of 1s'   );
@@ -70,6 +70,9 @@ do $$ begin perform FM.emit( '°s^one'         ); end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
+-- .........................................................................................................
+\echo :reverse:steel  FM.atoms :reset
+select * from         FM.atoms;
 -- .........................................................................................................
 \echo :reverse:steel  FM.queue :reset
 select * from         FM.queue;
