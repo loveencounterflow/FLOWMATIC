@@ -257,19 +257,21 @@ create function FM_FSM.move_event_from_queue_to_eventjournal( ¶row FM.queue, ¶
 create function FM_FSM.apply_current_effects( ¶row FM.queue )
   returns text volatile language plpgsql as $$
   declare
-    ¶remark       text  :=  'RESOLVED';
     ¶effect       record;
+    ¶remark       text    :=  'RESOLVED';
+    ¶has_effect   boolean :=  false;
   begin
     -- perform log( '^388799^', ¶row::text );
     -- ### TAINT consider to use temporary table as that will not get persisted
     refresh materialized view FM._current_transition_state_effects;
     for ¶effect in select * from FM._current_transition_state_effects loop
+      ¶has_effect := true;
       -- perform log( '^388800^', ¶effect::text );
       insert into FM.statejournal ( topic, focus, state, remark )
         values ( ¶effect.topic, ¶effect.focus, ¶effect.state, ¶remark );
       end loop;
-    -- ¶remark       :=  'UNPROCESSED';
-    return ¶remark;
+    if ¶has_effect then return ¶remark; end if;
+    return 'FUTILE';
     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
