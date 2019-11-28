@@ -271,13 +271,18 @@ FM._current_transition_moves;` before calling this method.';
 -- ---------------------------------------------------------------------------------------------------------
 create function FM.process_current_event() returns void language plpgsql as $$
   declare
-    ¶row      FM.queue;
-    ¶status   text  :=  'ok';
-    ¶t        text;
-    ¶jid      bigint;
+    ¶row              FM.queue;
+    ¶status           text  :=  'ok';
+    ¶t                text;
+    ¶jid              bigint;
+    -- ### TAINT hardcoding this b/c of intershop/bash/dash "bad substitution" issue when reading intershop.ptv
+    ¶eventbraces      boolean :=  true;
+    -- ¶eventbraces  boolean :=  ¶( 'flowmatic/journal/eventbraces' );
+    ¶journal_changed  boolean :=  false;
   begin
     select * from FM.current_event limit 1 into ¶row;
-    ¶jid = FM_FSM.write_event_to_journal( ¶row, 'active' );
+    if ¶eventbraces then  ¶jid = FM_FSM.write_event_to_journal( ¶row, '<'       );
+    else                  ¶jid = FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
@@ -298,8 +303,14 @@ create function FM.process_current_event() returns void language plpgsql as $$
         ¶status :=  FM_FSM.apply_current_effects( ¶row );
       end if;
     perform FM_FSM.queue_moves( ¶row );
+    select max( jid ) > ¶jid from FM.journal into ¶journal_changed;
+    if ¶eventbraces and ¶journal_changed then
+      perform FM_FSM.write_event_to_journal( ¶row, '>' );
+    else
+      if ¶eventbraces and ¶status = 'ok' then ¶status := '='; end if;
+      perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
+      end if;
     delete from FM.queue where queueid = ¶row.queueid;
-    perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
     -- .....................................................................................................
     end; $$;
 
