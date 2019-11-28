@@ -214,16 +214,23 @@ create function FM_FSM.reset() returns void volatile language plpgsql as $$
     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
-create function FM_FSM.move_event_from_queue_to_journal( ¶row FM.queue, ¶status text )
-  returns void volatile language plpgsql as $$
+create function FM_FSM.write_event_to_journal( ¶row FM.queue, ¶status text )
+  returns bigint volatile language plpgsql as $$
   declare
     ¶tf text[];
+    R   bigint;
   begin
-    delete from FM.queue where queueid = ¶row.queueid;
     ¶tf :=  regexp_match( ¶row.event, '^(.+)(\^.+)$' );
     insert into FM.journal  ( kind,     topic,    focus,    pair,       status ) values
-                            ( 'event',  ¶tf[ 1 ], ¶tf[ 2 ], ¶row.event, ¶status );
+                            ( 'event',  ¶tf[ 1 ], ¶tf[ 2 ], ¶row.event, ¶status )
+      returning jid into R;
+    return R;
     end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.update_journal_entry_status( ¶jid bigint, ¶status text )
+  returns void volatile language sql as $$
+  update FM.journal set status = ¶status where jid = ¶jid; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 create function FM_FSM.apply_current_effects( ¶row FM.queue )
@@ -267,8 +274,10 @@ create function FM.process_current_event() returns void language plpgsql as $$
     ¶row      FM.queue;
     ¶status   text  :=  'ok';
     ¶t        text;
+    ¶jid      bigint;
   begin
     select * from FM.current_event limit 1 into ¶row;
+    ¶jid = FM_FSM.write_event_to_journal( ¶row, 'active' );
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
@@ -289,7 +298,8 @@ create function FM.process_current_event() returns void language plpgsql as $$
         ¶status :=  FM_FSM.apply_current_effects( ¶row );
       end if;
     perform FM_FSM.queue_moves( ¶row );
-    perform FM_FSM.move_event_from_queue_to_journal( ¶row, ¶status );
+    delete from FM.queue where queueid = ¶row.queueid;
+    perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
     -- .....................................................................................................
     end; $$;
 

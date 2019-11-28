@@ -77,6 +77,9 @@ do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
 do $$ begin perform FM.process_current_event();  end; $$;
 do $$ begin perform FM.emit( '°FSM^HELO' );      end; $$;
 do $$ begin perform FM.process_current_event();  end; $$;
+do $$ begin perform FM.process_current_event();  end; $$;
+do $$ begin perform FM.process_current_event();  end; $$;
+do $$ begin perform FM.process_current_event();  end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
@@ -120,7 +123,7 @@ select * from         FM.queue;
 select * from         FM.current_state;
 -- .........................................................................................................
 \echo :reverse:steel  FM.journal :reset
-select * from         FM.journal;
+select * from         FM.journal order by jid;
 
 -- select
 --     phrase.phrasid,
