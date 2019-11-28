@@ -455,13 +455,13 @@ Components:
   multifacetted and continuous values e.g. `cpu1/temp[47°C]`; possibly use paths to denote nested machines
 
 ```
-┌─────────────────────────────────────────────┐
-│                    phrase                   │
-├──────────────────────┬──────────────────────┤
-│   premise, LHS       │       effect, RHS    │
-├───────────┬──────────┼──────────────┬───────┤
-│conditions │ trigger  │  consequents │ moves │
-└───────────┴──────────┴──────────────┴───────┘
+┌──────────────────────────────────────────────┐
+│                     phrase                   │
+├───────────────────────┬──────────────────────┤
+│    LHS: conditions    │   RHS: consequents   │
+├────────────┬──────────┼───────────┬──────────┤
+│  premises  │ trigger  │   effect  │   moves  │
+└────────────┴──────────┴───────────┴──────────┘
 ```
 
 
