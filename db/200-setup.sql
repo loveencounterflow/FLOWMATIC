@@ -265,7 +265,7 @@ create function FM_FSM.queue_moves( ¶row FM.queue )
   begin
     for ¶row in select move from FM._current_transition_moves order by nr loop
       -- perform log( '^388799^', ¶row.move::text );
-      perform FM.emit( ¶row.move::text );
+      perform FM._emit( ¶row.move::text );
       end loop;
     end; $$;
 
@@ -273,18 +273,21 @@ comment on function FM_FSM.queue_moves( FM.queue ) is 'NB. always perform `refre
 FM._current_transition_moves;` before calling this method.';
 
 -- ---------------------------------------------------------------------------------------------------------
-create function FM.process_current_event() returns void language plpgsql as $$
+create function FM._process_current_event() returns boolean language plpgsql as $$
   declare
     ¶row              FM.queue;
     ¶status           text  :=  'ok';
     ¶t                text;
     ¶jid              bigint;
-    -- ### TAINT hardcoding this b/c of intershop/bash/dash "bad substitution" issue when reading intershop.ptv
-    ¶eventbraces      boolean :=  true;
-    -- ¶eventbraces  boolean :=  ¶( 'flowmatic/journal/eventbraces' );
+    ¶eventbraces      boolean :=  ¶( 'flowmatic/journal/eventbraces' );
     ¶journal_changed  boolean :=  false;
+    R                 boolean;
   begin
     select * from FM.current_event limit 1 into ¶row;
+    -- perform log( '^5546-1^', ( ¶row is not distinct from null )::text );
+    -- perform log( '^5546-2^', ( ¶row is null )::text );
+    -- perform log( '^5546-3^', ¶row::text );
+    if ¶row is null then return false; end if;
     if ¶eventbraces then  ¶jid = FM_FSM.write_event_to_journal( ¶row, '<'       );
     else                  ¶jid = FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
@@ -315,9 +318,32 @@ create function FM.process_current_event() returns void language plpgsql as $$
       perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
       end if;
     delete from FM.queue where queueid = ¶row.queueid;
+    select count(*) > 0 from FM.queue into R;
+    return R;
     -- .....................................................................................................
     end; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+create function FM.process_current_event() returns boolean language plpgsql as $$
+  declare
+    ¶events_autoplay  boolean :=  ¶( 'flowmatic/moves/autoplay' );
+    ¶events_queued    boolean;
+  begin
+    loop
+      ¶events_queued := FM._process_current_event();
+      -- select count(*) = 0 from FM.queue into ¶events_queued;
+      exit when ( not ¶events_autoplay ) or ( not ¶events_queued );
+      end loop;
+    return ¶events_queued;
+    end; $$;
+
+comment on function FM.process_current_event() is 'Depending on settings, either process the oldes event in
+the event queue (possibly with the moves that are queued because of that event) or all of the events in the
+event queue (again, possibly with the moves that are queued because of those events). When
+`flowmatic/moves/autoplay` is true, then all those events that have been given as moves in transition
+phrases are implicitly queued; when `flowmatic/emit/autoplay` is true, any events queued with the
+`FM.emit()` function are implicitly processed, and there is no need to call `FM.process_current_event()`
+explicitly.';
 
 -- =========================================================================================================
 -- API
@@ -386,13 +412,20 @@ create function FM.add_transition( ¶conds text, ¶trgg FM_TYPES.action, ¶csqts
 -- ---------------------------------------------------------------------------------------------------------
 -- ### TAINT consider to enter event both into `queue` *and* `journal` at once so it can always be
 -- referred to by its stable ID in `journal`
-create function FM.emit( ¶event FM_TYPES.action )
+create function FM._emit( ¶event FM_TYPES.action, ¶suppress_emit_autoplay boolean default true )
   returns void volatile language plpgsql as $$
+  declare
+    ¶emit_autoplay  boolean :=  ¶( 'flowmatic/emit/autoplay' );
   begin
     insert into FM.queue ( event ) values ( ¶event );
+    if ¶emit_autoplay and not ¶suppress_emit_autoplay then perform FM.process_current_event(); end if;
   end; $$;
 
+create function FM.emit( ¶event FM_TYPES.action )
+  returns void volatile language sql as $$ select FM._emit( ¶event, false ); $$;
+
 comment on function FM.emit( FM_TYPES.action ) is 'Add event to the queue.';
+comment on function FM._emit( FM_TYPES.action, boolean ) is 'Add event to the queue without triggering autoplay.';
 
 
 -- =========================================================================================================
