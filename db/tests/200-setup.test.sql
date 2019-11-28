@@ -143,6 +143,13 @@ select * from FM.queue;
 \echo :reverse:steel FM.current_transition_effects            :reset
 select * from FM.current_transition_effects;
 
+do $$ begin perform FM.emit( '°FSM^HELO' );      end; $$;
+do $$ begin perform FM.process_current_event();  end; $$;
+
+-- .........................................................................................................
+\echo :reverse:steel FM.eventjournal            :reset
+select * from FM.eventjournal;
+
 -- select
 --     phrase.phrasid,
 --     phrase.

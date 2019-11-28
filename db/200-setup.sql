@@ -362,6 +362,8 @@ create function FM.add_transition( ¶conds text, ¶trgg FM_TYPES.action, ¶csqts
     select FM.add_transition( ¶conds, ¶trgg, ¶csqts, null ); $$;
 
 -- ---------------------------------------------------------------------------------------------------------
+-- ### TAINT consider to enter event both into `queue` *and* `eventjournal` at once so it can always be
+-- referred to by its stable ID in `eventjournal`
 create function FM.emit( ¶event FM_TYPES.action )
   returns void volatile language plpgsql as $$
   begin
@@ -390,11 +392,13 @@ do $$ begin
   perform FM.add_atom( ':IDLE',      'aspect',     'when the automaton is not in use'          );
   perform FM.add_atom( ':ACTIVE',    'aspect',     'when the automaton is in use'              );
   perform FM.add_atom( '^RESET',     'verb',       'put the automaton in its initial state'    );
+  perform FM.add_atom( '^HELO',      'verb',       'put the automaton in its initial state'    );
   -- perform FM.add_atom( '^START',     'verb',       'start the automaton'                       );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_pair(  '°FSM', ':IDLE',    'state',  true,   'the automaton is not in use'               );
   perform FM.add_pair(  '°FSM', ':ACTIVE',  'state',  false,  'the automaton is in use'                   );
   perform FM.add_pair(  '°FSM', '^RESET',   'event',  false,  'reset the automaton to its initial state'  );
+  perform FM.add_pair(  '°FSM', '^HELO',    'event',  false,  'extend greetings'  );
   -- perform FM.add_pair(  '°FSM', '^START',   'event',  false,  'start the automaton'                       );
   -- -------------------------------------------------------------------------------------------------------
   end; $$;
