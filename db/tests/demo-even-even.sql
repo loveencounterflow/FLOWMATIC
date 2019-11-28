@@ -70,19 +70,33 @@ do $$ begin perform FM.emit( '°s^one'         ); end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.atoms :reset
+-- select * from         FM.atoms;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.queue :reset
+-- select * from         FM.queue;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.journal :reset
+-- select * from         FM.journal order by jid;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.current_user_state :reset
+-- select * from         FM.current_user_state;
 -- .........................................................................................................
-\echo :reverse:steel  FM.atoms :reset
-select * from         FM.atoms;
--- .........................................................................................................
-\echo :reverse:steel  FM.queue :reset
-select * from         FM.queue;
--- .........................................................................................................
-\echo :reverse:steel  FM.journal :reset
-select * from         FM.journal order by jid;
--- .........................................................................................................
-\echo :reverse:steel  FM.current_user_state :reset
-select * from         FM.current_user_state;
+\echo :reverse:steel  FM.transitions :reset
+select * from FM.transitions;
 
+-- select
+--     trans.jid     as jid,
+--     trans.t       as t,
+--     trans.kind    as kind,
+--     trans.topic   as topic,
+--     trans.focus   as focus,
+--     trans.pair    as pair,
+--     trans.status  as status
+--   from FM.journal as trans
+--   order by jid
+--   ;
 
 /* ###################################################################################################### */
 \echo :red ———{ :filename 10 }———:reset

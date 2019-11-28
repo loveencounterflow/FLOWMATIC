@@ -197,6 +197,68 @@ create view FM.current_state_and_event as (
   ( select queueid, t, 'event', null,   null,   event,  null   from FM.current_event )
   order by topic, focus );
 
+/*
+-- ---------------------------------------------------------------------------------------------------------
+create function FM.get_state_before( ¶jid bigint, ¶topic FM_TYPES.topic )
+  returns record stable language plpgsql as $$
+  declare
+    R record;
+  begin
+    select into R
+      topic         as topic,
+      focus         as focus,
+      pair          as pair
+    from FM.journal
+    where true
+      and ( jid = ( select max( jid ) as jid
+        from FM.journal where true
+          and ( kind = 'state'  )
+          and ( jid < ¶jid      )
+          and ( topic = ¶topic  ) ) );
+    if R is null then return null; end if;
+    return R;
+  end; $$;
+*/
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM._transitions()
+  returns table (
+    jid1    bigint,
+    jid2    bigint,
+    before  FM_TYPES.pair,
+    event   FM_TYPES.pair,
+    after   FM_TYPES.pair )
+  stable language plpgsql as $$
+  declare
+    ¶row            record;
+    ¶event          FM_TYPES.action;
+    ¶prv_event      FM_TYPES.action;
+    ¶event_jid      bigint;
+    ¶prv_states     jsonb :=  '{}';
+    ¶prv_state_j    text;
+    ¶prv_state      FM_TYPES.pair;
+    ¶key            text[];
+  begin
+    for ¶row in select * from FM.journal order by jid loop
+      case ¶row.kind
+        when 'event' then
+          ¶event      :=  ¶row.pair;
+          ¶event_jid  :=  ¶row.jid;
+          continue;
+        when 'state' then
+          ¶prv_state_j  :=  ¶prv_states->>(¶row.topic::text);
+          ¶prv_state    :=  case ¶prv_state_j when 'null' then null else ¶prv_state_j::text::FM_TYPES.pair end;
+          return query select ¶event_jid, ¶row.jid, ¶prv_state, ¶event::FM_TYPES.pair, ¶row.pair;
+          ¶prv_event    :=  ¶event;
+          ¶key          :=  array[ ¶row.topic::text ];
+          ¶prv_states   :=  jsonb_set( ¶prv_states, ¶key, to_jsonb( ¶row.pair ) );
+        end case;
+      end loop;
+    return;
+  end; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create view FM.transitions as ( select * from FM._transitions() order by jid1, jid2 );
 
 -- =========================================================================================================
 --
