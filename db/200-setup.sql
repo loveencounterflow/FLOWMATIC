@@ -136,8 +136,12 @@ create view FM.current_state as ( select
     status        as status
   from FM.journal
   where true
-    and ( kind = 'state' )
-    and ( jid in ( select distinct max( jid ) over ( partition by topic ) as jid ) ) );
+    and ( jid in ( select distinct max( jid ) over ( partition by topic ) as jid
+      from FM.journal where kind = 'state' ) )
+  order by jid );
+
+-- ---------------------------------------------------------------------------------------------------------
+create view FM.current_user_state as ( select * from FM.current_state where topic != '°FSM' order by jid );
 
 -- ---------------------------------------------------------------------------------------------------------
 -- current event is oldest event in queue
