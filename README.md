@@ -700,4 +700,14 @@ get more involved, so let's keep the conceptually simpler model for the time bei
 * [ ] allow default / unnamed component, actions without component
 * [ ] implement moves on state enter, exit
 * [ ] build transitions view that links states with events
+* [ ] implement path syntax, abolish sigils
+* [ ] implement payloads for events
+* [ ] implement valued states
+* [ ] use unified, indexed values for journal status, display differently in custom journal view according
+  to journalling mode
+* [ ] 1. introduce machine ID or similar measure so any number of state machines can be implemented within
+  the same tables
+* [ ] 2. parse transition phrases using a state machine
+* [ ] 3. profit
+
 
