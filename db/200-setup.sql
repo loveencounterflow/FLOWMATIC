@@ -222,6 +222,10 @@ create view FM.journal as (
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
+create function FM_FSM.helo() returns void volatile language sql as $$
+  select log( E'\x1b[38;05;226m\x1b[7m ✱ helo ✱ \x1b[0m' ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
 create function FM_FSM.reset() returns void volatile language plpgsql as $$
   -- Reset all values to their defaults
   begin
