@@ -277,15 +277,16 @@ create function FM.process_current_event() returns void language plpgsql as $$
     select * from FM.current_event limit 1 into ¶row;
     perform log( '^6643^', ¶row::text );
     -- .....................................................................................................
-    case ¶row.event
-      when '°FSM^RESET' then
-        perform FM_FSM.reset();
-        perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
+    if ¶row.event ~ '^°FSM\^' then
+      case ¶row.event
+        when '°FSM^RESET' then perform FM_FSM.reset();
+        when '°FSM^HELO'  then perform FM_FSM.helo();
+        else ¶remark := 'UNKNOWN';
+        end case;
       else
         ¶remark :=  FM_FSM.apply_current_effects( ¶row );
-        perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
-      -- else                    ¶remark :=  'UNPROCESSED';
-      end case;
+      end if;
+    perform FM_FSM.move_event_from_queue_to_eventjournal( ¶row, ¶remark );
     -- .....................................................................................................
     end; $$;
 
