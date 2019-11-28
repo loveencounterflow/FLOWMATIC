@@ -152,6 +152,9 @@ select * from FM.statejournal;
 -- .........................................................................................................
 \echo :reverse:steel FM.eventjournal            :reset
 select * from FM.eventjournal;
+-- .........................................................................................................
+\echo :reverse:steel FM.journal            :reset
+select * from FM.journal;
 
 -- select
 --     phrase.phrasid,
