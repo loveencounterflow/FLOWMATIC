@@ -118,9 +118,9 @@ select * from         FM.queue;
 -- .........................................................................................................
 \echo :reverse:steel  FM.current_state :reset
 select * from         FM.current_state;
--- -- .........................................................................................................
--- \echo :reverse:steel  FM.journal :reset
--- select * from         FM.journal;
+-- .........................................................................................................
+\echo :reverse:steel  FM.journal :reset
+select * from         FM.journal;
 
 -- select
 --     phrase.phrasid,
