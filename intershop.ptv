@@ -12,7 +12,8 @@ intershop/rpc/host                    ::text=             127.0.0.1
 
 #-----------------------------------------------------------------------------------------------------------
 flowmatic/debugging                   ::boolean=          false
-# flowmatic/debugging                 	::boolean=          true
-# flowmatic/journal/eventbraces					::boolean=					true
-
+# flowmatic/debugging                   ::boolean=          true
+flowmatic/journal/eventbraces         ::boolean=          true
+flowmatic/moves/autoplay              ::boolean=          true
+flowmatic/emit/autoplay               ::boolean=          true
 
