@@ -28,6 +28,7 @@ do $$ begin
   perform FM.add_atom( '°plug',           'component',  'mains plug'                              );
   perform FM.add_atom( '°door',           'component',  'oven hatch'                              );
   perform FM.add_atom( '°power',          'component',  'whether appliance is powered'            );
+  perform FM.add_atom( '°bell',           'component',  'acoustic signal'                         );
   perform FM.add_atom( ':on',             'aspect',     'something is active'                     );
   perform FM.add_atom( ':off',            'aspect',     'something is inactive'                   );
   perform FM.add_atom( ':open',           'aspect',     'door is open'                            );
@@ -39,6 +40,7 @@ do $$ begin
   perform FM.add_atom( '^pull',           'verb',       'pull plug from socket'                   );
   perform FM.add_atom( '^open',           'verb',       'open a door'                   );
   perform FM.add_atom( '^close',          'verb',       'close a door'                   );
+  perform FM.add_atom( '^ring',           'verb',       'ring a bell'                   );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_pair( '°switch',       ':on',            'state',  false,  'the power button is in ''on'' position'    );
   perform FM.add_pair( '°switch',       ':off',           'state',  true,   'the power button is in ''off'' position'   );
@@ -54,13 +56,14 @@ do $$ begin
   perform FM.add_pair( '°plug',         '^pull',          'event',  false,  'pull plug from socket'                     );
   perform FM.add_pair( '°door',         '^open',          'event',  false,  'open the oven hatch'                       );
   perform FM.add_pair( '°door',         '^close',         'event',  false,  'close the oven hatch'                      );
+  perform FM.add_pair( '°bell',         '^ring',          'event',  false,  'ring the bell'                      );
   -- -------------------------------------------------------------------------------------------------------
   -- -- improved interface:
   -- perform FM.add_default_state(  '°switch:off', 'the power button is in ''off'' position' );
   -- perform FM.add_state(          '°switch:on',  'the power button is in ''on'' position'  );
   -- perform FM.add_event(          '°switch^toggle',  'press or release the power button'       );
   -- -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_transition( '°switch:off', '°switch^toggle', '°switch:on'                        );
+  perform FM.add_transition( '°switch:off', '°switch^toggle', '°switch:on', '°FSM^HELO,°bell^ring'                        );
   perform FM.add_transition( '°switch:off,°power:off', '°switch^toggle', '°switch:on,°power:on', '°FSM^HELO'                        );
   -- perform FM.add_transition( '°switch:off,°power:off', '°switch^toggle', '°switch:off,°power:on', '°FSM^HELO'                        );
   perform FM.add_transition( '°switch:on',  '°switch^toggle', '°switch:off'                        );
@@ -68,99 +71,62 @@ do $$ begin
   perform FM.add_transition( '°indicator:on',  '°indicator^toggle', '°indicator:off'                        );
   end; $$;
 
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 9 }———:reset
--- .........................................................................................................
-\echo :reverse:steel FM.atoms :reset
-select * from FM.atoms;
--- .........................................................................................................
-\echo :reverse:steel FM.pairs :reset
-select * from FM.pairs;
--- .........................................................................................................
-\echo :reverse:steel FM._transition_phrases :reset
-select * from FM._transition_phrases;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases :reset
-select * from FM.transition_phrases;
--- .........................................................................................................
-\echo :reverse:steel FM.queue :reset
-select * from FM.queue;
--- .........................................................................................................
-\echo :reverse:steel FM.statejournal :reset
-select * from FM.statejournal;
-
 do $$ begin perform FM.emit( '°FSM^RESET' );     end; $$;
 do $$ begin perform FM.process_current_event();  end; $$;
 do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
-
--- .........................................................................................................
-\echo :reverse:steel FM.queue            :reset
-select * from FM.queue;
--- .........................................................................................................
-\echo :reverse:steel FM.eventjournal            :reset
-select * from FM.eventjournal;
--- .........................................................................................................
-\echo :reverse:steel FM.statejournal            :reset
-select * from FM.statejournal;
--- .........................................................................................................
-\echo :reverse:steel FM.transition_phrases            :reset
-select * from FM.transition_phrases;
--- .........................................................................................................
-\echo :reverse:steel FM.current_state            :reset
-select * from FM.current_state;
--- .........................................................................................................
-\echo :reverse:steel FM.current_event            :reset
-select * from FM.current_event;
--- -- .........................................................................................................
--- \echo :reverse:steel FM.transition_phrases_with_current_event            :reset
--- select * from FM.transition_phrases_with_current_event;
--- -- .........................................................................................................
--- \echo :reverse:steel FM.transition_phrases_with_current_state            :reset
--- select * from FM.transition_phrases_with_current_state;
--- .........................................................................................................
-\echo :reverse:steel FM.current_transition_effects            :reset
-select * from FM.current_transition_effects;
-
 do $$ begin perform FM.process_current_event();  end; $$;
-
--- .........................................................................................................
-\echo :reverse:steel FM._current_transition_state_effects            :reset
-select * from FM._current_transition_state_effects;
--- .........................................................................................................
-\echo :reverse:steel FM.statejournal            :reset
-select * from FM.statejournal;
--- .........................................................................................................
-\echo :reverse:steel FM.current_state            :reset
-select * from FM.current_state;
--- .........................................................................................................
-\echo :reverse:steel FM.eventjournal            :reset
-select * from FM.eventjournal;
--- .........................................................................................................
-\echo :reverse:steel FM.queue            :reset
-select * from FM.queue;
--- .........................................................................................................
-\echo :reverse:steel FM.current_transition_effects            :reset
-select * from FM.current_transition_effects;
-
 do $$ begin perform FM.emit( '°FSM^HELO' );      end; $$;
 do $$ begin perform FM.process_current_event();  end; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 9 }———:reset
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM._current_transition_effects :reset
+-- select * from         FM._current_transition_effects;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM._current_transition_moves :reset
+-- select * from         FM._current_transition_moves;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM._transition_phrases :reset
+-- select * from         FM._transition_phrases;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.atoms :reset
+-- select * from         FM.atoms;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.current_event :reset
+-- select * from         FM.current_event;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.current_transition_consequents :reset
+-- select * from         FM.current_transition_consequents;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.eventjournal :reset
+-- select * from         FM.eventjournal;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.pairs :reset
+-- select * from         FM.pairs;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.statejournal :reset
+-- select * from         FM.statejournal;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.transition_phrases :reset
+-- select * from         FM.transition_phrases;
+
+
 -- .........................................................................................................
-\echo :reverse:steel FM.statejournal            :reset
-select * from FM.statejournal;
+\echo :reverse:steel  FM.queue :reset
+select * from         FM.queue;
 -- .........................................................................................................
-\echo :reverse:steel FM.eventjournal            :reset
-select * from FM.eventjournal;
--- .........................................................................................................
-\echo :reverse:steel FM.journal            :reset
-select * from FM.journal;
+\echo :reverse:steel  FM.current_state :reset
+select * from         FM.current_state;
+-- -- .........................................................................................................
+-- \echo :reverse:steel  FM.journal :reset
+-- select * from         FM.journal;
 
 -- select
 --     phrase.phrasid,
 --     phrase.
 --     csqt
---   from FM._current_transition_state_effects as phrase
+--   from FM._current_transition_effects as phrase
 --   lateral u
 
 /* ###################################################################################################### */
