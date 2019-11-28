@@ -147,6 +147,9 @@ do $$ begin perform FM.emit( '°FSM^HELO' );      end; $$;
 do $$ begin perform FM.process_current_event();  end; $$;
 
 -- .........................................................................................................
+\echo :reverse:steel FM.statejournal            :reset
+select * from FM.statejournal;
+-- .........................................................................................................
 \echo :reverse:steel FM.eventjournal            :reset
 select * from FM.eventjournal;
 
