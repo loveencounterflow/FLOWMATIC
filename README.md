@@ -571,7 +571,7 @@ in `intershop.ptv`:
 ```
 flowmatic/debugging                   ::boolean=          true
 flowmatic/journal/eventbraces         ::boolean=          true
-flowmatic/events/autoplay             ::boolean=          true
+flowmatic/moves/autoplay              ::boolean=          true
 flowmatic/emit/autoplay               ::boolean=          true
 ```
 
@@ -579,7 +579,7 @@ flowmatic/emit/autoplay               ::boolean=          true
   that come before and after any state changes caused by that event. Events that were successfully processed
   but did not result in any changes will have status `=`.
 
-* **`flowmatic/events/autoplay`**—whether to automatically process any events that resulted from any
+* **`flowmatic/moves/autoplay`**—whether to automatically process any events that resulted from any
   consequent (i.e. all moves) until event queue is empty.
 
 * **`flowmatic/emit/autoplay`**—whether to automatically process any events that have been `emit()`ted by
@@ -693,3 +693,11 @@ references to the `pairs` table because that is what they are, quotes of element
 pairs (states and actions). That, however, can only be done with intermediate `m:n` relations, which
 have been conveniently omitted here. *But* when we introduce predicates (a.k.a. 'payloads'), then things
 get more involved, so let's keep the conceptually simpler model for the time being.
+
+
+
+# To Do
+
+* [ ] declaring pairs should be enough to implicitly declare atoms
+
+
