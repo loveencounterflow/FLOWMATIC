@@ -248,7 +248,7 @@ create function FM_FSM.apply_current_effects( ¶row FM.queue )
     for ¶effect in select * from FM._current_transition_effects loop
       ¶has_effect := true;
       insert into FM.journal  ( kind,     topic,          focus,          pair,           status  ) values
-                              ( 'state',  ¶effect.topic,  ¶effect.focus,  ¶effect.state,  ¶status );
+                              ( 'state',  ¶effect.topic,  ¶effect.focus,  ¶effect.state,  ''      );
       end loop;
     if ¶has_effect then return ¶status; end if;
     return 'futile';
@@ -279,8 +279,8 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     ¶status           text  :=  'ok';
     ¶t                text;
     ¶jid              bigint;
-    ¶eventbraces      boolean :=  ¶( 'flowmatic/journal/eventbraces' );
-    ¶journal_changed  boolean :=  false;
+    ¶journal_mode     text :=  ¶( 'flowmatic/journal/mode' );
+    ¶journal_changes  integer;
     R                 boolean;
   begin
     select * from FM.current_event limit 1 into ¶row;
@@ -288,8 +288,8 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     -- perform log( '^5546-2^', ( ¶row is null )::text );
     -- perform log( '^5546-3^', ¶row::text );
     if ¶row is null then return false; end if;
-    if ¶eventbraces then  ¶jid = FM_FSM.write_event_to_journal( ¶row, '<'       );
-    else                  ¶jid = FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
+    if ¶journal_mode = 'eventbraces' then ¶jid := FM_FSM.write_event_to_journal( ¶row, '<'       );
+    else                                  ¶jid := FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
@@ -310,13 +310,30 @@ create function FM._process_current_event() returns boolean language plpgsql as 
         ¶status :=  FM_FSM.apply_current_effects( ¶row );
       end if;
     perform FM_FSM.queue_moves( ¶row );
-    select max( jid ) > ¶jid from FM.journal into ¶journal_changed;
-    if ¶eventbraces and ¶journal_changed then
-      perform FM_FSM.write_event_to_journal( ¶row, '>' );
-    else
-      if ¶eventbraces and ¶status = 'ok' then ¶status := '='; end if;
-      perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
-      end if;
+    select max( jid ) - ¶jid from FM.journal into ¶journal_changes;
+    -- .....................................................................................................
+    case ¶journal_mode
+      -- ...................................................................................................
+      when 'default' then
+        perform FM_FSM.write_event_to_journal( ¶row, ¶status );
+      -- ...................................................................................................
+      when 'eventbraces' then
+        if ¶journal_changes > 0 then
+          perform FM_FSM.write_event_to_journal( ¶row, '>' );
+        else
+          if ¶status = 'ok' then ¶status := '='; end if;
+          perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
+          end if;
+      -- ...................................................................................................
+      when 'counts' then
+        perform FM_FSM.update_journal_entry_status( ¶jid, ¶journal_changes::text );
+      -- ...................................................................................................
+      else
+        -- throw error
+        perform log( '^4482^', 'unknown journal mode: ' || ¶journal_mode );
+        null;
+      end case;
+    -- .....................................................................................................
     delete from FM.queue where queueid = ¶row.queueid;
     select count(*) > 0 from FM.queue into R;
     return R;
