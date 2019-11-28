@@ -562,6 +562,29 @@ conditions                      | trigger        |  consequents
 ------------------------------------------------------------------------------------------------------
 
 
+## Configuration
+
+**NOTE** not yet implemented
+
+in `intershop.ptv`:
+
+```
+flowmatic/debugging                   ::boolean=          true
+flowmatic/journal/eventbraces         ::boolean=          true
+flowmatic/events/autoplay             ::boolean=          true
+flowmatic/emit/autoplay               ::boolean=          true
+```
+
+* **`flowmatic/journal/eventbraces`**—whether to use two events, one with status `<` and one with status `>`
+  that come before and after any state changes caused by that event. Events that were successfully processed
+  but did not result in any changes will have status `=`.
+
+* **`flowmatic/events/autoplay`**—whether to automatically process any events that resulted from any
+  consequent (i.e. all moves) until event queue is empty.
+
+* **`flowmatic/emit/autoplay`**—whether to automatically process any events that have been `emit()`ted by
+  the user.
+
 # The FlowMatic Finite Automaton
 
 ## Symbolic and Built-In States
