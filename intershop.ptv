@@ -4,7 +4,7 @@
 
 #-----------------------------------------------------------------------------------------------------------
 intershop/host/name                   ::text=             flowmatic
-intershop/db/port                     ::integer=          5432
+intershop/db/port                     ::integer=          5433
 intershop/db/name                     ::text=             ${intershop/host/name}
 intershop/db/user                     ::text=             ${intershop/db/name}
 intershop/rpc/port                    ::integer=          23001
