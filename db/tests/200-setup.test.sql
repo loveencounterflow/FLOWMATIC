@@ -127,6 +127,9 @@ select * from         FM.current_user_state;
 -- .........................................................................................................
 \echo :reverse:steel  FM.journal :reset
 select * from         FM.journal order by jid;
+-- .........................................................................................................
+\echo :reverse:steel  FM.transitions :reset
+select * from FM.transitions;
 
 -- select
 --     phrase.phrasid,
