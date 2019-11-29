@@ -709,5 +709,10 @@ get more involved, so let's keep the conceptually simpler model for the time bei
   the same tables
 * [ ] 2. parse transition phrases using a state machine
 * [ ] 3. profit
+* [ ] record phrasid in journal to indicate which transition phrase was activated
+
+
+
+
 
 
