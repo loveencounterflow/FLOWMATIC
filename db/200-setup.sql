@@ -253,6 +253,7 @@ create function FM._transitions()
           ¶key          :=  array[ ¶row.topic::text ];
           ¶prv_states   :=  jsonb_set( ¶prv_states, ¶key, to_jsonb( ¶row.pair ) );
         end case;
+      perform log( '^8873^', ¶prv_states::text );
       end loop;
     return;
   end; $$;

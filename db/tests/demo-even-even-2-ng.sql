@@ -17,32 +17,61 @@ drop schema if exists X cascade;
 -- Shai Simonson
 -- aduni.org/courses/theory/
 
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 2 }———:reset
+do $$ begin
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_states( 's/zeros[:even,:odd]'  );
+  perform FM.add_states( 's/ones[:even,:odd]'   );
+  perform FM.add_states( 's/light[:off,:on]'    );
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_events( 's/zero()'       );
+  perform FM.add_events( 's/one()'        );
+  perform FM.add_events( 'bell/ring()'  );
+  -- -------------------------------------------------------------------------------------------------------
+  perform FM.add_transitions( 'match s/zeros[:even]               await s/zero() apply s/zeros[:odd]'                     );
+  perform FM.add_transitions( 'match s/zeros[:odd]                await s/zero() apply s/zeros[:even] emit bell/ring()' );
+  perform FM.add_transitions( 'match s/ones[:even]                await s/one()  apply s/ones[:odd]'                      );
+  perform FM.add_transitions( 'match s/ones[:odd]                 await s/one()  apply s/ones[:even]  emit bell/ring()' );
+  perform FM.add_transitions( 'match s/ones[:even], s/ones[:even] await entry()  emit bell/ring(), s/light[:on]' );
+  perform FM.add_transitions( 'match s/ones[:even], s/ones[:even] await exit()   emit bell/ring(), s/light[:on]' );
+  -- .......................................................................................................
+  end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 2 }———:reset
 do $$ begin
   -- -------------------------------------------------------------------------------------------------------
-  -- perform FM.add_atom( '°s',              'component',  'default component'                               );
-  -- perform FM.add_atom( '°bell',           'component',  'attention grabber'                               );
-  -- perform FM.add_atom( '^zero',           'verb',       'digit 0 coming up'                               );
-  -- perform FM.add_atom( '^one',            'verb',       'digit 1 coming up'                               );
-  -- perform FM.add_atom( '^ring',           'verb',       'make noise'                                      );
+  -- state declaration that start with colon set type of state to enumeration of symbols; can be either
+  -- single values or lists. First state added for a given component is initial (i.e. default) value:
+  perform FM.add_states( 's/zeros=:even'      );
+  perform FM.add_states( 's/zeros=:odd'       );
+  perform FM.add_states( 's/ones=:even:odd'   );
+  perform FM.add_states( 's/light=:off:on'    );
+  -- state declarations that do not start with colon must be followed by single, valid JSON literal that
+  -- denotes initial state. No type checking is done, not (yet?) possible to add any domain checks (such
+  -- as for positive integers or the like):
+  perform FM.add_states( 's/nr=0' );
+  perform FM.add_states( 's/foo=true' );
+  perform FM.add_states( 's/bar=null' );
+  perform FM.add_states( 's/bar="sometext"' );
+  perform FM.add_states( 's/bar=[8,7,6]' );
+  perform FM.add_states( 's/bar={"foo":42}' );
   -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_pair( '°zeros',          ':even', 'state',  true,    'even # of 0s'  );
-  perform FM.add_pair( '°zeros',          ':odd',  'state',  false,   'odd # of 0s'  );
-  perform FM.add_pair( '°ones',           ':even', 'state',  true,    'even # of 1s'  );
-  perform FM.add_pair( '°ones',           ':odd',  'state',  false,   'odd # of 1s'  );
+  perform FM.add_events( 's/zero()'       );
+  perform FM.add_events( 's/one()'        );
+  perform FM.add_events( 's/nr/plus()'    );
+  perform FM.add_events( 'bell/ring()'    );
   -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_pair( '°s',              '^zero',      'event',  false,  'next digit is a 0'             );
-  perform FM.add_pair( '°s',              '^one',       'event',  false,  'next digit is a 1'             );
-  perform FM.add_pair( '°bell',           '^ring',      'event',  false,  'grab attention'                );
-  -- -------------------------------------------------------------------------------------------------------
-  perform FM.add_transition( '°FSM:IDLE', '°FSM^RESET', null, '°bell^ring'                                );
-  -- .......................................................................................................
-  perform FM.add_transition( '°zeros:even',  '°s^zero',    '°zeros:odd'                             );
-  perform FM.add_transition( '°zeros:odd',   '°s^zero',    '°zeros:even'                            );
-  perform FM.add_transition( '°ones:even',   '°s^one',     '°ones:odd'                              );
-  perform FM.add_transition( '°ones:odd',    '°s^one',     '°ones:even'                             );
+  -- Transition phrases use keywords `match`, `await`, `apply`, `emit`, `call` to introduce premises, triggers,
+  -- effects, moves, and actions, respectively.
+  perform FM.add_transitions( 'match s/zeros=:even               await s/zero() apply s/zeros=:odd'                     );
+  perform FM.add_transitions( 'match s/zeros=:odd                await s/zero() apply s/zeros=:even emit bell/ring()' );
+  perform FM.add_transitions( 'match s/ones=:even                await s/one()  apply s/ones=:odd'                      );
+  perform FM.add_transitions( 'match s/ones=:odd                 await s/one()  apply s/ones=:even  emit bell/ring()' );
+  perform FM.add_transitions( 'match s/ones=:even s/zeros:even   await entry()  emit bell/ring() s/light=:on' );
+  perform FM.add_transitions( 'match s/ones=:even s/zeros:even   await exit()   emit bell/ring() s/light=:on' );
+  perform FM.add_transitions( 'await exit() call bell/ring()' );
   -- .......................................................................................................
   end; $$;
 
@@ -85,6 +114,9 @@ select * from FM.transitions;
 --   from FM.journal as trans
 --   order by jid
 --   ;
+
+select U.split_initial_json_trimmed( ' "an initial value" followed by other stuff'  );
+
 
 
 
