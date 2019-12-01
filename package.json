@@ -11,8 +11,9 @@
     "url": "git+https://github.com/loveencounterflow/flowmatic.git"
   },
   "dependencies": {
-    "cnd": "^4.6.0",
+    "cnd": "^4.7.0",
     "executable": "^4.1.1",
+    "named-pipe": "^1.0.0",
     "shelljs": "^0.8.3",
     "stackman": "^4.0.0"
   },
