@@ -22,7 +22,7 @@ FS                        = require 'fs'
 PATH                      = require 'path'
 is_executable             = require 'executable'
 #...........................................................................................................
-require './exception-handler'
+require 'cnd/lib/exception-handler'
 
 ### TAINT using environment instead of values from intershop.ptv ###
 ### TAINT values from intershop.ptv do not include intershop/guest/bin/path ###
