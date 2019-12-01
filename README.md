@@ -536,7 +536,7 @@ transition phrase :=
 ║       5 │      2 │      1 │ °FSM       │ ^TICK         │ °power     │ :off       ║
 ╚═════════╧════════╧════════╧════════════╧═══════════════╧════════════╧════════════╝
 
-conditions                      | trigger        |  consequents
+premises                        | trigger        |  effects
 °FSM    °switch   °plug         |                |  °FSM    °switch   °plug
 ————————————————————————————————————————————————————————————————————————————————————
 :IDLE   ---       ---           | °FSM^START     |  :ACTIVE ---       ---
@@ -691,6 +691,51 @@ references to the `pairs` table because that is what they are, quotes of element
 pairs (states and actions). That, however, can only be done with intermediate `m:n` relations, which
 have been conveniently omitted here. *But* when we introduce predicates (a.k.a. 'payloads'), then things
 get more involved, so let's keep the conceptually simpler model for the time being.
+
+
+## Syntax Doodles
+
+
+```js
+add_states
+  s/zeros = :even
+  s/zeros = :odd
+  s/ones  = :even :odd
+  s/light = :off  :on
+
+  s/nr    = 0
+  s/foo   = true
+  s/bar   = null
+  s/bar   = "sometext"
+  s/bar   = [8,7,6]
+  s/bar   = {"foo":42}
+  ;
+
+#-----------------------------------------------------------------------------------------------------------
+add_events
+  s/zero()
+  s/one()
+  s/nr/plus()
+  bell/ring()
+  ;
+
+add_actions
+  ;
+
+#-----------------------------------------------------------------------------------------------------------
+# Transition phrases use keywords `match`, `await`, `apply`, `emit`, `call` to introduce premises, triggers,
+# effects, moves, and actions, respectively.
+add_transition match s/zeros=:even               await s/zero() apply s/zeros=:odd
+add_transition match s/zeros=:odd                await s/zero() apply s/zeros=:even emit bell/ring()
+add_transition match s/ones=:even                await s/one()  apply s/ones=:odd
+add_transition match s/ones=:odd                 await s/one()  apply s/ones=:even  emit bell/ring()
+add_transition match s/ones=:even s/zeros:even   await entry()  emit bell/ring() s/light=:on
+add_transition match s/ones=:even s/zeros:even   await exit()   emit bell/ring() s/light=:on
+add_transition await exit() call bell/ring()
+```
+
+
+
 
 
 
