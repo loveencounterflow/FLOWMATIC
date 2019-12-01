@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "cnd": "^4.7.0",
+    "datom": "^2.3.1",
     "executable": "^4.1.1",
     "named-pipe": "^1.0.0",
     "shelljs": "^0.8.3",
-    "stackman": "^4.0.0"
+    "stackman": "^4.0.0",
+    "steampipes": "^3.2.0",
+    "tail": "^2.0.3"
   },
   "devDependencies": {},
   "scripts": {
