@@ -49,15 +49,19 @@ do $$ begin
 do $$ begin perform FM.emit( '°FSM^RESET'     ); end; $$;
 do $$ begin perform FM.emit( '°s^zero'        ); end; $$;
 do $$ begin perform FM.emit( '°s^one'         ); end; $$;
-do $$ begin perform FM.emit( '°s^zero'        ); end; $$;
+-- do $$ begin perform FM.emit( '°s^zero'        ); end; $$;
 do $$ begin perform FM.emit( '°s^one'         ); end; $$;
 do $$ begin perform FM.emit( '°s^one'         ); end; $$;
-do $$ begin perform FM.emit( '°s^one'         ); end; $$;
+-- do $$ begin perform FM.emit( '°s^one'         ); end; $$;
 -- do $$ begin perform FM.emit( '°switch^toggle' ); end; $$;
 -- do $$ begin perform FM.emit( '°FSM^HELO' );      end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 9 }———:reset
+-- .........................................................................................................
+\echo :reverse:steel  FM.transition_phrases :reset
+select * from         FM.transition_phrases;
+
 -- -- .........................................................................................................
 -- \echo :reverse:steel  FM.atoms :reset
 -- select * from         FM.atoms;
@@ -67,12 +71,25 @@ do $$ begin perform FM.emit( '°s^one'         ); end; $$;
 -- -- .........................................................................................................
 -- \echo :reverse:steel  FM.journal :reset
 -- select * from         FM.journal order by jid;
--- -- .........................................................................................................
--- \echo :reverse:steel  FM.current_user_state :reset
--- select * from         FM.current_user_state;
 -- .........................................................................................................
 \echo :reverse:steel  FM.transitions :reset
 select * from FM.transitions;
+-- .........................................................................................................
+\echo :reverse:steel  FM.current_user_state :reset
+select * from         FM.current_user_state;
+
+
+do $$ begin perform FM.emit( '°FSM^RESET'     ); end; $$;
+-- do $$ begin perform FM.emit( '°s^zero'        ); end; $$;
+
+-- .........................................................................................................
+\echo :reverse:steel  FM.transitions :reset
+select * from FM.transitions;
+-- .........................................................................................................
+\echo :reverse:steel  FM.current_user_state :reset
+select * from         FM.current_user_state;
+
+
 
 -- select
 --     trans.jid     as jid,
