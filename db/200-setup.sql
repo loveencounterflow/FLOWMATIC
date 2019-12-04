@@ -272,12 +272,12 @@ create function FM_FSM.reset() returns void volatile language plpgsql as $$
   -- Reset all values to their defaults
   begin
     insert into FM.journal ( kind,    topic, focus, pair,           status )
-      select                 'state', topic, focus, topic || focus, 'reset'
+      select                 'state', topic, focus, topic || focus, 'reset-defaults'
       from FM.pairs
       where dflt;
     -- ### TAINT consider to actually use entries in `_transition_phrases`:
     insert into FM.journal  ( kind,     topic,  focus,      pair,           status  ) values
-                            ( 'state',  '°FSM', ':ACTIVE',  '°FSM:ACTIVE',  'reset' );
+                            ( 'state',  '°FSM', ':ACTIVE',  '°FSM:ACTIVE',  'reset-activate' );
     end; $$;
 
 -- ---------------------------------------------------------------------------------------------------------
