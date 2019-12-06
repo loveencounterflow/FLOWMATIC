@@ -11,7 +11,7 @@
     "url": "git+https://github.com/loveencounterflow/flowmatic.git"
   },
   "dependencies": {
-    "cnd": "^4.7.0",
+    "cnd": "^4.7.3",
     "datom": "^2.3.1",
     "executable": "^4.1.1",
     "shelljs": "^0.8.3",
