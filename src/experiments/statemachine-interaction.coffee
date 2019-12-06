@@ -34,37 +34,60 @@ sleep                     = ( dts ) -> new Promise ( done ) => setTimeout done, 
 { jr }                    = CND
 DB                        = require '../../intershop/intershop_modules/db'
 #...........................................................................................................
+types                     = require '../types'
+{ isa
+  validate
+  cast
+  type_of }               = types
+#...........................................................................................................
 require 'cnd/lib/exception-handler'
 
 
-#-----------------------------------------------------------------------------------------------------------
-demo_2 = -> new Promise ( resolve ) =>
-  fifo      = FIFO.new_fifo()
-  pipeline  = []
-  pipeline.push FIFO.new_message_source fifo
-  pipeline.push $watch ( d ) => info '^333^', d
-  pipeline.push $drain =>
-    resolve()
-  SP.pull pipeline...
-  return null
+# #-----------------------------------------------------------------------------------------------------------
+# demo_2 = -> new Promise ( resolve ) =>
+#   fifo      = FIFO.new_fifo()
+#   pipeline  = []
+#   pipeline.push FIFO.new_message_source fifo
+#   pipeline.push $watch ( d ) => info '^333^', d
+#   pipeline.push $drain =>
+#     resolve()
+#   SP.pull pipeline...
+#   return null
 
 ############################################################################################################
 if require.main is module then do =>
-#   # await demo_1()
-#   await demo_2()
-#   help 'ok'
 
-  # PG                        = require 'pg'
+  emit = ( $key, $value ) ->
+    validate.undefined $value
+    await DB.query [ "select FM.emit( $1 );", $key, ]
+    return null
 
-  # process.on 'uncaughtException',  -> warn "^8876^ uncaughtException";  setTimeout ( -> process.exit 1 ), 250
-  # process.on 'unhandledRejection', -> warn "^8876^ unhandledRejection"; setTimeout ( -> process.exit 1 ), 250
+  show = ->
+    ### TAINT assemble value in DB ###
+    R = {}
+    for row in await DB.query "select * from FM.current_user_state order by topic;"
+      R[ row.topic ] = row.focus
+    urge jr R
 
-  # rpc_server = require '../../intershop/intershop_modules/intershop-rpc-server-secondary'
-  # rpc_server.listen()
-
-  info jr row.pair for row in await DB.query """select * from FM.current_user_state;"""
-  info jr row for row in await DB.query """select * from FM.emit( '°s^zero' );"""
-  info jr row.pair for row in await DB.query """select * from FM.current_user_state;"""
+  rpc_server = require '../../intershop/intershop_modules/intershop-rpc-server-secondary'
+  rpc_server.listen()
+  process.on 'uncaughtException',  -> rpc_server.stop()
+  process.on 'unhandledRejection', -> rpc_server.stop()
+  #.........................................................................................................
+  rpc_server.contract 'on_flowmatic_event', ( S, Q ) ->
+    validate.object Q
+    { event, } = Q
+    debug '^33373^', rpr event
+    return null
+  #.........................................................................................................
+  # info jr row for row in await DB.query """select * from FM.journal;"""
+  await show()
+  await emit '°s^zero'
+  await show()
+  await emit '°s^zero'
+  await show()
+  await emit '°s^one'
+  await show()
   process.exit 0
 
 

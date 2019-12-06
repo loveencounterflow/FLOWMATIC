@@ -344,6 +344,7 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     ¶jid              bigint;
     ¶journal_mode     text :=  ¶( 'flowmatic/journal/mode' );
     ¶journal_changes  integer;
+    ¶rpc_available    boolean;
     R                 boolean;
   begin
     select * from FM.current_event limit 1 into ¶row;
@@ -354,6 +355,11 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     if ¶journal_mode = 'eventbraces' then ¶jid := FM_FSM.write_event_to_journal( ¶row, '<'       );
     else                                  ¶jid := FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
+    -- select IPC.has_rpc_method( 'on_flowmatic_event' ) into ¶rpc_available;
+    if IPC.has_rpc_method( 'on_flowmatic_event' ) then
+      -- perform log( '^4444^', 'on_flowmatic_event', ¶row::text );
+      perform IPC.rpc( 'on_flowmatic_event', jsonb_build_object( 'event', ¶row.event ) );
+      end if;
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
       ||  ¶t
