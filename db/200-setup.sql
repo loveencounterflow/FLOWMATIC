@@ -237,6 +237,8 @@ create function FM._transitions()
     return;
   end; $$;
 
+comment on function FM._transitions() is 'Provides procedural code for view `FM.transitions`.';
+
 -- ---------------------------------------------------------------------------------------------------------
 create view FM.transitions as ( select * from FM._transitions() order by jid1, jid2 );
 
