@@ -36,11 +36,13 @@ do $$ begin
   perform FM.add_pair( '°s',              '^zero',      'event',  false,  'next digit is a 0'             );
   perform FM.add_pair( '°s',              '^one',       'event',  false,  'next digit is a 1'             );
   perform FM.add_pair( '°bell',           '^ring',      'event',  false,  'grab attention'                );
+  perform FM.add_pair( '°light',          '^flash',     'event',  false,  'grab attention'                );
   -- -------------------------------------------------------------------------------------------------------
   perform FM.add_transition( '°FSM:IDLE', '°FSM^RESET', null, '°bell^ring'                                );
   -- .......................................................................................................
   perform FM.add_transition( '°zeros:even',  '°s^zero',    '°zeros:odd'                             );
-  perform FM.add_transition( '°zeros:odd',   '°s^zero',    '°zeros:even'                            );
+  perform FM.add_transition( '°zeros:odd',   '°s^zero',    '°zeros:even', '°bell^ring'              );
+  -- perform FM.add_transition( null,           '°bell^ring', null,          '°light^flash',            );
   perform FM.add_transition( '°ones:even',   '°s^one',     '°ones:odd'                              );
   perform FM.add_transition( '°ones:odd',    '°s^one',     '°ones:even'                             );
   -- .......................................................................................................
