@@ -199,29 +199,6 @@ create view FM.current_state_and_event as (
   ( select queueid, t, 'event', null,   null,   event,  null   from FM.current_event )
   order by topic, focus );
 
-/*
--- ---------------------------------------------------------------------------------------------------------
-create function FM.get_state_before( ¶jid bigint, ¶topic FM_TYPES.topic )
-  returns record stable language plpgsql as $$
-  declare
-    R record;
-  begin
-    select into R
-      topic         as topic,
-      focus         as focus,
-      pair          as pair
-    from FM.journal
-    where true
-      and ( jid = ( select max( jid ) as jid
-        from FM.journal where true
-          and ( kind = 'state'  )
-          and ( jid < ¶jid      )
-          and ( topic = ¶topic  ) ) );
-    if R is null then return null; end if;
-    return R;
-  end; $$;
-*/
-
 -- ---------------------------------------------------------------------------------------------------------
 create function FM._transitions()
   returns table (
