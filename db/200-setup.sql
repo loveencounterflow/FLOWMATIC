@@ -423,7 +423,7 @@ create function FM.process_current_event() returns boolean language plpgsql as $
     return ¶events_queued;
     end; $$;
 
-comment on function FM.process_current_event() is 'Depending on settings, either process the oldes event in
+comment on function FM.process_current_event() is 'Depending on settings, either process the oldest event in
 the event queue (possibly with the moves that are queued because of that event) or all of the events in the
 event queue (again, possibly with the moves that are queued because of those events). When
 `flowmatic/moves/autoplay` is true, then all those events that have been given as moves in transition
