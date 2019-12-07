@@ -337,6 +337,31 @@ create function FM_FSM.queue_moves( ¶row FM.queue )
 comment on function FM_FSM.queue_moves( FM.queue ) is 'NB. always perform `refresh materialized view
 FM._current_transition_moves;` before calling this method.';
 
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FM._notify_client( ¶row FM.queue ) returns boolean language plpgsql as $$
+  declare
+    ¶rpc_rsp          jsonb;
+    ¶rpc_events       text[];
+  begin
+    if not coalesce( IPC.has_rpc_method( 'on_flowmatic_event' ), false ) then
+      perform log( '^4444^', 'on_flowmatic_event', '(ignoring)', ¶rpc_rsp::text );
+      return false;
+      end if;
+    ¶rpc_rsp := IPC.rpc( 'on_flowmatic_event', jsonb_build_object( 'event', ¶row.event ) );
+    if jsonb_typeof( ¶rpc_rsp ) = 'array' then
+      perform log( '^4444^', 'on_flowmatic_event', 'json array', ¶rpc_rsp::text );
+      -- no need to aggregate, can insert as is; observe ordering
+      -- ### TAINT return value should be a command, symmetric to RPC request
+      -- so we can extend to do a number of different things ###
+      -- thx to https://dba.stackexchange.com/a/54289/126933 for way to unpack JSON arrays
+      select array_agg( t ) from lateral ( select jsonb_array_elements_text( ¶rpc_rsp ) as t ) as x ( t ) into ¶rpc_events;
+      perform log( '^4444^', 'on_flowmatic_event', 'text[]', ¶rpc_events::text );
+      -- FM.emit( ¶event FM_TYPES.action )
+    end if;
+    return true;
+    end; $$;
+
 -- ---------------------------------------------------------------------------------------------------------
 create function FM._process_current_event() returns boolean language plpgsql as $$
   declare
@@ -344,38 +369,15 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     ¶status           text  :=  'ok';
     ¶t                text;
     ¶jid              bigint;
-    ¶journal_mode     text :=  ¶( 'flowmatic/journal/mode' );
     ¶journal_changes  integer;
-    ¶rpc_available    boolean;
-    ¶rpc_rsp          jsonb;
-    ¶rpc_events       text[];
     R                 boolean;
   begin
+    -- ### TAINT not safe when concurrent
     select * from FM.current_event limit 1 into ¶row;
-    -- perform log( '^5546-1^', ( ¶row is not distinct from null )::text );
-    -- perform log( '^5546-2^', ( ¶row is null )::text );
-    -- perform log( '^5546-3^', ¶row::text );
     if ¶row is null then return false; end if;
-    if ¶journal_mode = 'eventbraces' then ¶jid := FM_FSM.write_event_to_journal( ¶row, '<'       );
-    else                                  ¶jid := FM_FSM.write_event_to_journal( ¶row, 'active'  ); end if;
-    ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
-    -- select IPC.has_rpc_method( 'on_flowmatic_event' ) into ¶rpc_available;
-    if IPC.has_rpc_method( 'on_flowmatic_event' ) then
-      ¶rpc_rsp := IPC.rpc( 'on_flowmatic_event', jsonb_build_object( 'event', ¶row.event ) );
-      if jsonb_typeof( ¶rpc_rsp ) = 'array' then
-        perform log( '^4444^', 'on_flowmatic_event', 'json array', ¶rpc_rsp::text );
-        -- no need to aggregate, can insert as is; observe ordering
-        -- ### TAINT return value should be a command, symmetric to RPC request
-        -- so we can extend to do a number of different things ###
-        -- thx to https://dba.stackexchange.com/a/54289/126933 for way to unpack JSON arrays
-        select array_agg( t ) from lateral ( select jsonb_array_elements_text( ¶rpc_rsp ) as t ) as x ( t ) into ¶rpc_events;
-        perform log( '^4444^', 'on_flowmatic_event', 'text[]', ¶rpc_events::text );
-        -- FM.emit( ¶event FM_TYPES.action )
-
-      else
-        perform log( '^4444^', 'on_flowmatic_event', '(ignoring)', ¶rpc_rsp::text );
-        end if;
-      end if;
+    ¶jid  :=  FM_FSM.write_event_to_journal( ¶row, 'active' );
+    ¶t    :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
+    perform FM._notify_client( ¶row );
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
       ||  ¶t
@@ -397,28 +399,10 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     perform FM_FSM.queue_moves( ¶row );
     select max( jid ) - ¶jid from FM.journal into ¶journal_changes;
     -- .....................................................................................................
-    case ¶journal_mode
-      -- ...................................................................................................
-      when 'default' then
-        perform FM_FSM.write_event_to_journal( ¶row, ¶status );
-      -- ...................................................................................................
-      when 'eventbraces' then
-        if ¶journal_changes > 0 then
-          perform FM_FSM.write_event_to_journal( ¶row, '>' );
-        else
-          if ¶status = 'ok' then ¶status := '='; end if;
-          perform FM_FSM.update_journal_entry_status( ¶jid, ¶status );
-          end if;
-      -- ...................................................................................................
-      when 'counts' then
-        perform FM_FSM.update_journal_entry_status( ¶jid, ¶journal_changes::text );
-      -- ...................................................................................................
-      else
-        -- throw error
-        perform log( '^4482^', 'unknown journal mode: ' || ¶journal_mode );
-        null;
-      end case;
-    -- .....................................................................................................
+    -- ### TAINT not safe when concurrent, see
+    --     https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
+    --     https://www.pgcon.org/2016/schedule/attachments/414_queues-pgcon-2016.pdf
+    --     https://github.com/timgit/pg-boss
     delete from FM.queue where queueid = ¶row.queueid;
     select count(*) > 0 from FM.queue into R;
     return R;
