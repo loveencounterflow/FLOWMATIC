@@ -347,6 +347,8 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     ¶journal_mode     text :=  ¶( 'flowmatic/journal/mode' );
     ¶journal_changes  integer;
     ¶rpc_available    boolean;
+    ¶rpc_rsp          jsonb;
+    ¶rpc_events       text[];
     R                 boolean;
   begin
     select * from FM.current_event limit 1 into ¶row;
@@ -359,8 +361,20 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     ¶t  :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
     -- select IPC.has_rpc_method( 'on_flowmatic_event' ) into ¶rpc_available;
     if IPC.has_rpc_method( 'on_flowmatic_event' ) then
-      -- perform log( '^4444^', 'on_flowmatic_event', ¶row::text );
-      perform IPC.rpc( 'on_flowmatic_event', jsonb_build_object( 'event', ¶row.event ) );
+      ¶rpc_rsp := IPC.rpc( 'on_flowmatic_event', jsonb_build_object( 'event', ¶row.event ) );
+      if jsonb_typeof( ¶rpc_rsp ) = 'array' then
+        perform log( '^4444^', 'on_flowmatic_event', 'json array', ¶rpc_rsp::text );
+        -- no need to aggregate, can insert as is; observe ordering
+        -- ### TAINT return value should be a command, symmetric to RPC request
+        -- so we can extend to do a number of different things ###
+        -- thx to https://dba.stackexchange.com/a/54289/126933 for way to unpack JSON arrays
+        select array_agg( t ) from lateral ( select jsonb_array_elements_text( ¶rpc_rsp ) as t ) as x ( t ) into ¶rpc_events;
+        perform log( '^4444^', 'on_flowmatic_event', 'text[]', ¶rpc_events::text );
+        -- FM.emit( ¶event FM_TYPES.action )
+
+      else
+        perform log( '^4444^', 'on_flowmatic_event', '(ignoring)', ¶rpc_rsp::text );
+        end if;
       end if;
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'

@@ -78,6 +78,7 @@ if require.main is module then do =>
     validate.object Q
     { event, } = Q
     debug '^33373^', rpr event
+    return [ '°s^zero', ] if event is '°s^one'
     return null
   #.........................................................................................................
   # info jr row for row in await DB.query """select * from FM.journal;"""
