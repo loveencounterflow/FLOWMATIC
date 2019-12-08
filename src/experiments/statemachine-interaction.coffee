@@ -19,7 +19,7 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 # FS                        = require 'fs'
 # FSP                       = ( require 'fs' ).promises
-# PATH                      = require 'path'
+PATH                      = require 'path'
 #...........................................................................................................
 SP                        = require 'steampipes'
 { $
@@ -29,6 +29,7 @@ SP                        = require 'steampipes'
   $drain }                = SP.export()
 DATOM                     = require 'datom'
 { new_datom
+  freeze
   select }                = DATOM.export()
 sleep                     = ( dts ) -> new Promise ( done ) => setTimeout done, dts * 1000
 { jr }                    = CND
@@ -54,23 +55,28 @@ require 'cnd/lib/exception-handler'
 #   SP.pull pipeline...
 #   return null
 
-############################################################################################################
-if require.main is module then do =>
+#-----------------------------------------------------------------------------------------------------------
+emit = ( $key, $value ) ->
+  validate.undefined $value
+  await DB.query [ "select FM.emit( $1 );", $key, ]
+  return null
 
-  emit = ( $key, $value ) ->
-    validate.undefined $value
-    await DB.query [ "select FM.emit( $1 );", $key, ]
-    return null
+#-----------------------------------------------------------------------------------------------------------
+show = ->
+  ### TAINT assemble value in DB ###
+  R = {}
+  for row in await DB.query "select * from FM.current_user_state order by topic;"
+    R[ row.topic ] = row.focus
+  urge jr R
 
-  show = ->
-    ### TAINT assemble value in DB ###
-    R = {}
-    for row in await DB.query "select * from FM.current_user_state order by topic;"
-      R[ row.topic ] = row.focus
-    urge jr R
-
+#-----------------------------------------------------------------------------------------------------------
+start_rpc_server = -> new Promise ( resolve, reject ) =>
   rpc_server = require '../../intershop/intershop_modules/intershop-rpc-server-secondary'
-  rpc_server.listen()
+  rpc_server.listen ( error, P ) => if error? then reject error else resolve rpc_server
+
+#-----------------------------------------------------------------------------------------------------------
+demo = ->
+  rpc_server = await start_rpc_server()
   process.on 'uncaughtException',  -> rpc_server.stop()
   process.on 'unhandledRejection', -> rpc_server.stop()
   #.........................................................................................................
@@ -91,6 +97,33 @@ if require.main is module then do =>
   await show()
   process.exit 0
 
+#-----------------------------------------------------------------------------------------------------------
+read_configuration = ->
+  PTVR                      = require '../../intershop/intershop_modules/ptv-reader'
+  guest_intershop_ptv_path  = PATH.resolve PATH.join __dirname, '../../intershop/intershop.ptv'
+  host_intershop_ptv_path   = PATH.resolve PATH.join __dirname, '../../intershop.ptv'
+  return freeze PTVR.hash_from_paths guest_intershop_ptv_path, host_intershop_ptv_path
+
+#-----------------------------------------------------------------------------------------------------------
+start_rpc_server_with_default_handler = ->
+  # help PgBoss.getConstructionPlans()
+  rpc_server = await start_rpc_server()
+  process.on 'uncaughtException',  -> rpc_server.stop()
+  process.on 'unhandledRejection', -> rpc_server.stop()
+  #.........................................................................................................
+  rpc_server.contract 'on_flowmatic_event', ( S, Q ) ->
+    validate.object Q
+    { event, } = Q
+    return 'gotcha'
+  return rpc_server
+
+
+############################################################################################################
+if require.main is module then do =>
+
+
+  rpc_server = await start_rpc_server_with_default_handler()
+  process.exit 1
 
 
 
