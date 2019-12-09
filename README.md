@@ -11,6 +11,10 @@
   - [Representation of State](#representation-of-state)
   - [Complex State](#complex-state)
   - [Conjunctions and Disjunctions](#conjunctions-and-disjunctions)
+  - [Atoms, Pairs, Terms, Clauses and Phrases](#atoms-pairs-terms-clauses-and-phrases)
+    - [Atoms: the Elementary Parts](#atoms-the-elementary-parts)
+    - [Pairs: States and Actions](#pairs-states-and-actions)
+    - [Phrases](#phrases)
   - [Continuous Values](#continuous-values)
   - [Comparisons](#comparisons)
   - [If / Then / Else Conditions](#if--then--else-conditions)
@@ -19,10 +23,15 @@
   - [Turing Completeness](#turing-completeness)
   - [XXX](#xxx)
   - [Sigils](#sigils)
+  - [Microwave Oven model](#microwave-oven-model)
+  - [Tripartite Phrase Model (Upcoming)](#tripartite-phrase-model-upcoming)
+  - [Configuration](#configuration)
 - [The FlowMatic Finite Automaton](#the-flowmatic-finite-automaton)
   - [Symbolic and Built-In States](#symbolic-and-built-in-states)
   - [Symbolic and Built-In Acts](#symbolic-and-built-in-acts)
   - [Constraints on Transitions Table](#constraints-on-transitions-table)
+  - [Syntax Doodles](#syntax-doodles)
+- [To Do](#to-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
