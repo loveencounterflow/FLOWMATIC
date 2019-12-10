@@ -12,8 +12,9 @@
   },
   "dependencies": {
     "cnd": "^4.7.3",
-    "datom": "^2.3.1",
+    "datom": "^2.4.0",
     "executable": "^4.1.1",
+    "intershop-rpc": "0.0.2",
     "shelljs": "^0.8.3",
     "steampipes": "^3.2.0"
   },
