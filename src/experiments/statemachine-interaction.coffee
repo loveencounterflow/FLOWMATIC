@@ -41,6 +41,9 @@ types                     = require '../types'
   cast
   type_of }               = types
 #...........................................................................................................
+RPC                       = require 'intershop-rpc'
+debug ( k for k of RPC )
+#...........................................................................................................
 require 'cnd/lib/exception-handler'
 
 
@@ -123,6 +126,8 @@ if require.main is module then do =>
 
 
   rpc_server = await start_rpc_server_with_default_handler()
+  XE = DATOM.new_xemitter()
+  debug ( k for k of XE )
   process.exit 1
 
 
