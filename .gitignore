@@ -46,6 +46,6 @@ jspm_packages
 
 .peru
 intershop/node_modules
-intershop/*
+intershop
 
 
