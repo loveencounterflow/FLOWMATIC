@@ -9,23 +9,38 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Parts](#parts)
-  - [Atoms](#atoms)
-  - [Transition Phrases](#transition-phrases)
-  - [Transitions](#transitions)
-  - [Queue](#queue)
+  - [Public](#public)
+    - [Atoms](#atoms)
+    - [Rules / Transition Phrases](#rules--transition-phrases)
+    - [Transitions](#transitions)
+    - [Journal](#journal)
+    - [Current (User) State](#current-user-state)
+    - [Current Event](#current-event)
+    - [Current Transition Consequents](#current-transition-consequents)
+    - [Queue](#queue)
+  - [Internal](#internal)
+    - [Effects and Moves of Current Transition, Captured](#effects-and-moves-of-current-transition-captured)
 - [To Do](#to-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Parts
 
-## Atoms
-
-## Transition Phrases
-## Transitions
-
-## Queue
-
+## Public
+### Atoms
+### Rules / Transition Phrases
+### Transitions
+`FM.transitions`
+### Journal
+### Current (User) State
+### Current Event
+### Current Transition Consequents
+`current_transition_consequents`
+### Queue
+## Internal
+### Effects and Moves of Current Transition, Captured
+`FM._current_transition_effects`
+`FM._current_transition_moves`
 
 
 # To Do
