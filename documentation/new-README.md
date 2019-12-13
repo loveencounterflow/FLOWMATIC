@@ -9,12 +9,22 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Parts](#parts)
+  - [Atoms](#atoms)
+  - [Transition Phrases](#transition-phrases)
+  - [Transitions](#transitions)
+  - [Queue](#queue)
 - [To Do](#to-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Parts
 
+## Atoms
+
+## Transition Phrases
+## Transitions
+
+## Queue
 
 
 
