@@ -41,8 +41,7 @@ types                     = require '../types'
   cast
   type_of }               = types
 #...........................................................................................................
-RPC                       = require 'intershop-rpc'
-debug ( k for k of RPC )
+Rpc                       = require 'intershop-rpc'
 
 
 # #-----------------------------------------------------------------------------------------------------------
@@ -71,25 +70,33 @@ show = ->
   urge jr R
 
 #-----------------------------------------------------------------------------------------------------------
-start_rpc_server = -> new Promise ( resolve, reject ) =>
-  rpc_server = require '../../intershop/intershop_modules/intershop-rpc-server-secondary'
-  rpc_server.listen ( error, P ) => if error? then reject error else resolve rpc_server
+start_rpc_server = ->
+  rpc = new Rpc 23001
+  rpc.listen_to_all     ( P... ) -> whisper '^66676^ listen_to_all', P
+  rpc.listen_to_unheard ( P... ) -> whisper '^66676^ listen_to_unheard', P
+  await rpc.start()
+  # debug '^77764-1^', await rpc.emit '^foobar'
+  # debug '^77764-2^', await rpc.contract '^foobar', ( d ) -> urge '^4542^', d; return 42
+  # debug '^77764-3^', await rpc.delegate '^foobar'
+  return rpc
 
 #-----------------------------------------------------------------------------------------------------------
 demo = ->
-  rpc_server = await start_rpc_server()
-  process.on 'uncaughtException',  -> rpc_server.stop()
-  process.on 'unhandledRejection', -> rpc_server.stop()
+  rpc = await start_rpc_server()
+  info '^3334-1^'
   #.........................................................................................................
-  rpc_server.contract 'on_flowmatic_event', ( S, Q ) ->
+  rpc.contract 'on_flowmatic_event', ( S, Q ) ->
     validate.object Q
     { event, } = Q
     debug '^33373^', rpr event
     return [ '°s^zero', ] if event is '°s^one'
     return null
   #.........................................................................................................
-  # info jr row for row in await DB.query """select * from FM.journal;"""
+  info '^3334-2^'
+  info jr row for row in await DB.query """select * from FM.journal;"""
+  info '^3334-3^'
   await show()
+  info '^3334-4^'
   await emit '°s^zero'
   await show()
   await emit '°s^zero'
@@ -108,24 +115,25 @@ read_configuration = ->
 #-----------------------------------------------------------------------------------------------------------
 start_rpc_server_with_default_handler = ->
   # help PgBoss.getConstructionPlans()
-  rpc_server = await start_rpc_server()
-  process.on 'uncaughtException',  -> rpc_server.stop()
-  process.on 'unhandledRejection', -> rpc_server.stop()
+  rpc = await start_rpc_server()
+  # process.on 'uncaughtException',  -> rpc.stop(); process.exitCode = 1
+  # process.on 'unhandledRejection', -> rpc.stop(); process.exitCode = 1
   #.........................................................................................................
-  rpc_server.contract 'on_flowmatic_event', ( S, Q ) ->
+  rpc.contract 'on_flowmatic_event', ( S, Q ) ->
     validate.object Q
     { event, } = Q
     return 'gotcha'
-  return rpc_server
+  return rpc
 
 
 ############################################################################################################
 if require.main is module then do =>
-
-
-  rpc_server = await start_rpc_server_with_default_handler()
-  XE = DATOM.new_xemitter()
-  debug ( k for k of XE )
+  # info '^11981^', read_configuration()
+  # rpc = await start_rpc_server_with_default_handler()
+  rpc = await demo()
+  help 'ok'
+  # XE = DATOM.new_xemitter()
+  # debug ( k for k of XE )
   process.exit 1
 
 
