@@ -38,6 +38,7 @@ types                     = require '../types'
 #...........................................................................................................
 { jr }                    = CND
 Rpc                       = require 'intershop-rpc'
+DB                        = require '../../intershop/intershop_modules/db'
 
 
 ############################################################################################################
@@ -53,5 +54,7 @@ if module is require.main then do =>
   debug '^7712^', await rpc.delegate '^flowmatic-event', { x: 123, }
   debug '^7712^', await rpc.delegate '^flowmatic-event', 123
   debug '^7712^', await rpc.delegate new_datom '^flowmatic-event', 123
+  $key = '°s/^one'
+  debug '^8887^', await DB.query [ "select FM.emit( $1 );", $key, ]
   process.exit 1
 
