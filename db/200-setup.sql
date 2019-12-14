@@ -357,7 +357,10 @@ create function FM._process_current_event() returns boolean language plpgsql as 
     if ¶row is null then return false; end if;
     ¶jid  :=  FM_FSM.write_event_to_journal( ¶row, 'active' );
     ¶t    :=  to_char( ¶row.t, 'YYYY-MON-DD HH24:MI:SS.MS' );
-    perform FM._notify_client( ¶row );
+    -- #####################################################################################################
+    -- ### deactivated FTTB
+    -- ### perform FM._notify_client( ¶row );
+    -- #####################################################################################################
     perform log(
           e'\x1b[38;05;240m^775^ \x1b[38;05;94m'
       ||  ¶t
