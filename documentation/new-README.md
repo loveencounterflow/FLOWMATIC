@@ -83,7 +83,7 @@ place                 role                  quality     comment
 /apps/blink/light     state                 :on
 /apps/blink/light     action                toggle()
 ...............................................................................
-/apps/blink/plug      state                 :loose      # default state
+/apps/blink/plug      state                 :unplugged      # default state
 /apps/blink/plug      state                 :inserted
 ———————————————————————————————————————————————————————————————————————————————
 ```
@@ -118,11 +118,11 @@ When the timer ticks, an intent to toggle the app's light is queued:
 ———————————————————————————————————————————————————————————————————————————————
 ```
 
-We can capture the fact that light can never be on when the plug is not inserted:
+We can capture the fact that the light can never be on when the plug is not inserted:
 
 ```
 ———————————————————————————————————————————————————————————————————————————————
-/rules[4]             premise               /apps/blink/plug/:loose
+/rules[4]             premise               /apps/blink/plug/:unplugged
 /rules[4]             effect                /apps/blink/light/:off
 ———————————————————————————————————————————————————————————————————————————————
 ```
@@ -133,9 +133,9 @@ the implicit trigger `/~enter()` is used):
 
 ```
 ———————————————————————————————————————————————————————————————————————————————
-/rules[4]             premise               /apps/blink/plug/:loose
-/rules[4]             premise               /apps/blink/light/:off
-/rules[4]             move                  /apps/blink/light/~error("impossible state")
+/rules[5]             premise               /apps/blink/plug/:unplugged
+/rules[5]             premise               /apps/blink/light/:off
+/rules[5]             move                  /apps/blink/light/~error("impossible state")
 ———————————————————————————————————————————————————————————————————————————————
 ```
 
@@ -162,7 +162,7 @@ the implicit trigger `/~enter()` is used):
 * context, set in advance (?)
 * components, concrete and abstract: 'places' to 'hold state'
 * components may be nested: `oven/power/switch`; state may be associated with intermediate components as in
-  when `oven/power/switch/:pressed` and `oven/power/plug/:loose` implies `oven/power/:off`; when
+  when `oven/power/switch/:pressed` and `oven/power/plug/:unplugged` implies `oven/power/:off`; when
   `oven/power/switch/:pressed` then `oven/power/plug/insert()` triggers `oven/plug/:inserted` and
   `oven/power/:on`.
 
@@ -186,7 +186,7 @@ the implicit trigger `/~enter()` is used):
 
 * assemblies are complex parts built from more elementary ones; e.g. above we have a `power` assembly with a
   `switch` and a `plug`, and one could add an indicator `light` to give `power/ { switch/ {
-  :pressed, :released, toggle() }, plug/ { :loose, :inserted, insert(), pull() }, light/ { :on, :off, } }`,
+  :pressed, :released, toggle() }, plug/ { :unplugged, :inserted, insert(), pull() }, light/ { :on, :off, } }`,
   or, more readably,
 
   ```
@@ -198,7 +198,7 @@ the implicit trigger `/~enter()` is used):
       :pressed
       toggle()
     plug/
-      :loose
+      :unplugged
       :inserted
       pull()
       insert()
