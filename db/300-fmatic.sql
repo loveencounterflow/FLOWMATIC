@@ -101,9 +101,9 @@ create table FMAT.parts (
 -- thx to https://stackoverflow.com/a/8289253/7568091 (as usual)
 -- thx to https://dba.stackexchange.com/a/9760/126933 (as usual)
 -- ### TAINT think about best ordering of fields
-create unique index "role, path, quality must be unique where rulid is null" on
+create unique index "unique (role,path,quality) where rulid is null" on
   FMAT.parts ( role, path, quality ) where rulid is null;
-create unique index "role, path, quality, rulid must be unique where rulid is not null" on
+create unique index "unique (role,path,quality,rulid) where rulid is not null" on
   FMAT.parts ( role, path, quality, rulid ) where rulid is not null;
 
 comment on table FMAT.parts is 'XXXXXXXXXXXXXXXXXXXXXX';
