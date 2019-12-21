@@ -21,7 +21,12 @@ drop schema if exists FMAT cascade; create schema FMAT;
 -- ### TAINT use intershop.ptv variables to make configurable?
 create domain FMAT.positive_integer as integer  check ( value > 0                   );
 create domain FMAT.nonempty_text    as text     check ( value ~ '.+'                );
-create domain FMAT.absolute_path    as text     check ( value ~ '^/$|^/.+(?!/)$'        );
+create domain FMAT.absolute_path    as text     check (
+  ( value = '/' ) or ( value ~ '^/.*[^/]$' and value !~ '//' ) );
+
+comment on domain FMAT.absolute_path is 'Data type for FlowMatic paths (qualified names); must be either a
+slash (for the root element) or else start with a slash, followed by at least one character other than a
+slash, not contain any slash directly followed by another slash, and not end in a slash.';
 
 
 -- =========================================================================================================
