@@ -111,42 +111,6 @@ comment on table FMAT.parts is 'XXXXXXXXXXXXXXXXXXXXXX';
 
 -- =========================================================================================================
 --
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 5 }———:reset
-insert into FMAT.rulids ( rulid ) values ( 1 );
-insert into FMAT.rulids ( rulid ) values ( 2 );
-insert into FMAT.rulids ( rulid ) values ( 3 );
-insert into FMAT.rulids ( rulid ) values ( 4 );
-insert into FMAT.rulids ( rulid ) values ( 5 );
-
--- ---------------------------------------------------------------------------------------------------------
-\echo :signal ———{ :filename 6 }———:reset
-insert into FMAT.parts ( rulid, role, path, quality ) values
-  ( null, 'state',    '/apps/blink/light',          ':off'                                                ),
-  ( null, 'state',    '/apps/blink/light',          ':on'                                                 ),
-  ( null, 'action',   '/apps/blink/light',          'toggle()'                                            ),
-  ( null, 'state',    '/apps/blink/plug',           ':unplugged'                                          ),
-  ( null, 'state',    '/apps/blink/plug',           ':inserted'                                           ),
-  ( null, 'action',   '/apps/blink/timer',          'tick()'                                              ),
-  ( 1,    'premise',  '/apps/blink/light',          ':on'                                                 ),
-  ( 1,    'trigger',  '/apps/blink/light',          'toggle()'                                            ),
-  ( 1,    'effect',   '/apps/blink/light',          ':off'                                                ),
-  ( 2,    'premise',  '/apps/blink/plug',           ':inserted'                                           ),
-  ( 2,    'premise',  '/apps/blink/light',          ':off'                                                ),
-  ( 2,    'trigger',  '/apps/blink/light',          'toggle()'                                            ),
-  ( 2,    'effect',   '/apps/blink/light',          ':on'                                                 ),
-  ( 3,    'trigger',  '/apps/blink/timer',          'tick()'                                              ),
-  ( 3,    'move',     '/apps/blink/light',          'toggle()'                                            ),
-  ( 4,    'premise',  '/apps/blink/plug',           ':unplugged'                                          ),
-  ( 4,    'trigger',  '/',                          '~enter()'                                            ),
-  ( 4,    'effect',   '/apps/blink/light',          ':off'                                                ),
-  ( 5,    'premise',  '/apps/blink/plug',           ':unplugged'                                          ),
-  ( 5,    'trigger',  '/',                          '~enter()'                                            ),
-  ( 5,    'premise',  '/apps/blink/light',          ':on'                                                 ),
-  ( 5,    'move',     '/apps/blink/light',          '~error("impossible state")'                          );
-
-select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path, p.quality from FMAT.parts p join FMAT.roles as r using ( role ) order by r.priority,     p.path,   p.rulid,    p.quality;
-select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path, p.quality from FMAT.parts p join FMAT.roles as r using ( role ) order by p.path,     r.priority,   p.rulid,    p.quality;
 
 /* ###################################################################################################### */
 \echo :red ———{ :filename 13 }———:reset
