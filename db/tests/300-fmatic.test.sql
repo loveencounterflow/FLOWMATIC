@@ -90,10 +90,11 @@ select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path from FMAT.part
 do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer/tick()' ); end; $$;
 do $$ begin perform FMAT.push_to_queue( '/apps/blink/light/toggle()' ); end; $$;
 select * from FMAT.queue order by qid;
-select FMAT.pop_from_queue();
+select FMAT.advance_next();
 do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer/tick()' ); end; $$;
-select FMAT.pop_from_queue();
+select FMAT.advance_next();
 select * from FMAT.queue order by qid;
+select * from FMAT.journal order by jid;
 
 
 /* ###################################################################################################### */
