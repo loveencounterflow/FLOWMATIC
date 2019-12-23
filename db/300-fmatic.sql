@@ -14,6 +14,33 @@
 drop schema if exists FMAT cascade; create schema FMAT;
 
 
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 1 }———:reset
+create function FMAT.test_absolute_path( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  select ( ¶x = '/' ) or ( ¶x ~ '^/.*[^/]$' and ¶x !~ '//' ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FMAT.test_path_segment( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  -- ### TAINT more specifically, should exclude any brackets except at end etc
+  select ¶x ~ '^[^/\s]+$'; $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FMAT.test_aspect( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  select FMAT.test_path_segment( ¶x ) and ( ¶x ~ '^:[^()]$' ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FMAT.test_action( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  select FMAT.test_path_segment( ¶x ) and ( ¶x ~ '^[^:()]\(\)$' ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FMAT.test_topic( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  select FMAT.test_absolute_path( ¶x ); $$;
+
+-- ---------------------------------------------------------------------------------------------------------
+create function FMAT.test_focus( ¶x text ) returns boolean immutable parallel safe language sql as $$
+  select FMAT.test_aspect( ¶x ) or FMAT.test_action( ¶x ); $$;
+
+
 -- =========================================================================================================
 --
 -- ---------------------------------------------------------------------------------------------------------
@@ -21,8 +48,9 @@ drop schema if exists FMAT cascade; create schema FMAT;
 -- ### TAINT use intershop.ptv variables to make configurable?
 create domain FMAT.positive_integer as integer  check ( value > 0                   );
 create domain FMAT.nonempty_text    as text     check ( value ~ '.+'                );
-create domain FMAT.absolute_path    as text     check (
-  ( value = '/' ) or ( value ~ '^/.*[^/]$' and value !~ '//' ) );
+create domain FMAT.absolute_path    as text     check ( FMAT.test_absolute_path( value ) );
+create domain FMAT.topic            as text     check ( FMAT.test_topic( value ) );
+create domain FMAT.focus            as text     check ( FMAT.test_focus( value ) );
 
 comment on domain FMAT.absolute_path is 'Data type for FlowMatic paths (qualified names); must be either a
 slash (for the root element) or else start with a slash, followed by at least one character other than a
