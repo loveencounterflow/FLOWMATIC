@@ -31,6 +31,7 @@ create function X.test_absolute_path( ¶x text ) returns boolean
 -- ---------------------------------------------------------------------------------------------------------
 insert into T.probes_and_matchers
   ( function_name, p1_txt, p1_cast, expect, match_txt, match_type ) values
+  ( 'X.test_absolute_path', '',               'text', 'eq', 'false', 'boolean' ),
   ( 'X.test_absolute_path', '/',              'text', 'eq', 'true',  'boolean' ),
   ( 'X.test_absolute_path', '/x/foo/bar',     'text', 'eq', 'true',  'boolean' ),
   ( 'X.test_absolute_path', '/x/foo//bar',    'text', 'eq', 'false', 'boolean' ),
