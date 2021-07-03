@@ -7,7 +7,7 @@
 -- \pset pager on
 \timing off
 \set filename 200-setup.sql
--- -- \set ECHO queries
+\set ECHO queries
 
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 1 }———:reset
