@@ -32,12 +32,16 @@ create function X.test_absolute_path( ¶x text ) returns boolean
 insert into T.probes_and_matchers
   ( function_name, p1_txt, p1_cast, expect, match_txt, match_type ) values
   ( 'X.test_absolute_path', '',               'text', 'eq', 'false', 'boolean' ),
-  ( 'X.test_absolute_path', '/',              'text', 'eq', 'true',  'boolean' ),
-  ( 'X.test_absolute_path', '/x/foo/bar',     'text', 'eq', 'true',  'boolean' ),
+  ( 'X.test_absolute_path', '/',              'text', 'eq', 'false', 'boolean' ),
+  ( 'X.test_absolute_path', '/#~enter()',     'text', 'eq', 'true',  'boolean' ),
+  ( 'X.test_absolute_path', '/#baz',          'text', 'eq', 'true',  'boolean' ),
+  ( 'X.test_absolute_path', '/bar#baz',       'text', 'eq', 'true',  'boolean' ),
+  ( 'X.test_absolute_path', '/foo/bar#baz',   'text', 'eq', 'true',  'boolean' ),
+  ( 'X.test_absolute_path', '/x/foo/bar',     'text', 'eq', 'false', 'boolean' ),
   ( 'X.test_absolute_path', '/x/foo//bar',    'text', 'eq', 'false', 'boolean' ),
   ( 'X.test_absolute_path', '/x/foo/bar/',    'text', 'eq', 'false', 'boolean' ),
   ( 'X.test_absolute_path', '北',             'text', 'eq', 'false', 'boolean' ),
-  ( 'X.test_absolute_path', '/北',            'text', 'eq', 'true',  'boolean' );
+  ( 'X.test_absolute_path', '/北',            'text', 'eq', 'false', 'boolean' );
 
 /* ====================================================================================================== */
 \ir './test-perform.sql'
@@ -59,28 +63,28 @@ insert into FMAT.rules ( rulid, comment ) values ( 5, 'XXX' );
 -- ---------------------------------------------------------------------------------------------------------
 \echo :signal ———{ :filename 6 }———:reset
 insert into FMAT.parts ( rulid, role, path ) values
-  ( null, 'state',    '/apps/blink/light/:off'                          ),
-  ( null, 'state',    '/apps/blink/light/:on'                           ),
-  ( null, 'action',   '/apps/blink/light/toggle()'                      ),
-  ( null, 'state',    '/apps/blink/plug/:unplugged'                     ),
-  ( null, 'state',    '/apps/blink/plug/:inserted'                      ),
-  ( null, 'action',   '/apps/blink/timer/tick()'                        ),
-  ( 1,    'premise',  '/apps/blink/light/:on'                           ),
-  ( 1,    'trigger',  '/apps/blink/light/toggle()'                      ),
-  ( 1,    'effect',   '/apps/blink/light/:off'                          ),
-  ( 2,    'premise',  '/apps/blink/plug/:inserted'                      ),
-  ( 2,    'premise',  '/apps/blink/light/:off'                          ),
-  ( 2,    'trigger',  '/apps/blink/light/toggle()'                      ),
-  ( 2,    'effect',   '/apps/blink/light/:on'                           ),
-  ( 3,    'trigger',  '/apps/blink/timer/tick()'                        ),
-  ( 3,    'move',     '/apps/blink/light/toggle()'                      ),
-  ( 4,    'premise',  '/apps/blink/plug/:unplugged'                     ),
-  ( 4,    'trigger',  '/~enter()'                                       ),
-  ( 4,    'effect',   '/apps/blink/light/:off'                          ),
-  ( 5,    'premise',  '/apps/blink/plug/:unplugged'                     ),
-  ( 5,    'trigger',  '/~enter()'                                       ),
-  ( 5,    'premise',  '/apps/blink/light/:on'                           ),
-  ( 5,    'move',     '/apps/blink/light/~error("impossible state")'    );
+  ( null, 'state',    '/apps/blink/light#:off'                          ),
+  ( null, 'state',    '/apps/blink/light#:on'                           ),
+  ( null, 'action',   '/apps/blink/light#toggle()'                      ),
+  ( null, 'state',    '/apps/blink/plug#:unplugged'                     ),
+  ( null, 'state',    '/apps/blink/plug#:inserted'                      ),
+  ( null, 'action',   '/apps/blink/timer#tick()'                        ),
+  ( 1,    'premise',  '/apps/blink/light#:on'                           ),
+  ( 1,    'trigger',  '/apps/blink/light#toggle()'                      ),
+  ( 1,    'effect',   '/apps/blink/light#:off'                          ),
+  ( 2,    'premise',  '/apps/blink/plug#:inserted'                      ),
+  ( 2,    'premise',  '/apps/blink/light#:off'                          ),
+  ( 2,    'trigger',  '/apps/blink/light#toggle()'                      ),
+  ( 2,    'effect',   '/apps/blink/light#:on'                           ),
+  ( 3,    'trigger',  '/apps/blink/timer#tick()'                        ),
+  ( 3,    'move',     '/apps/blink/light#toggle()'                      ),
+  ( 4,    'premise',  '/apps/blink/plug#:unplugged'                     ),
+  ( 4,    'trigger',  '/#~enter()'                                       ),
+  ( 4,    'effect',   '/apps/blink/light#:off'                          ),
+  ( 5,    'premise',  '/apps/blink/plug#:unplugged'                     ),
+  ( 5,    'trigger',  '/#~enter()'                                       ),
+  ( 5,    'premise',  '/apps/blink/light#:on'                           ),
+  ( 5,    'move',     '/apps/blink/light#~error("impossible state")'    );
 
 select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path from FMAT.parts p join FMAT.roles as r using ( role ) order by r.priority,     p.path,   p.rulid;
 select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path from FMAT.parts p join FMAT.roles as r using ( role ) order by p.path,     r.priority,   p.rulid;
@@ -88,11 +92,11 @@ select p.partid, p.rulid, r.rolegroup, r.priority, p.role, p.path from FMAT.part
 -- .........................................................................................................
 \echo :reverse:steel  queueing :reset
 -- select * from         FM.transition_phrases;
-do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer/tick()' ); end; $$;
-do $$ begin perform FMAT.push_to_queue( '/apps/blink/light/toggle()' ); end; $$;
+do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer#tick()' ); end; $$;
+do $$ begin perform FMAT.push_to_queue( '/apps/blink/light#toggle()' ); end; $$;
 select * from FMAT.queue order by qid;
 select FMAT.advance_next();
-do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer/tick()' ); end; $$;
+do $$ begin perform FMAT.push_to_queue( '/apps/blink/timer#tick()' ); end; $$;
 select FMAT.advance_next();
 select * from FMAT.queue order by qid;
 select * from FMAT.journal order by jid;
