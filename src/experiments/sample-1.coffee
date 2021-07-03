@@ -1,4 +1,40 @@
 
+'use strict'
+
+############################################################################################################
+CND                       = require 'cnd'
+rpr                       = CND.rpr
+badge                     = 'FLOMATIC/SAMPLE-1'
+log                       = CND.get_logger 'plain',     badge
+info                      = CND.get_logger 'info',      badge
+whisper                   = CND.get_logger 'whisper',   badge
+alert                     = CND.get_logger 'alert',     badge
+debug                     = CND.get_logger 'debug',     badge
+warn                      = CND.get_logger 'warn',      badge
+help                      = CND.get_logger 'help',      badge
+urge                      = CND.get_logger 'urge',      badge
+echo                      = CND.echo.bind CND
+#...........................................................................................................
+{ isa
+  validate
+  cast
+  declare
+  type_of }               = require '../types'
+#...........................................................................................................
+SP                        = require 'steampipes'
+{ $
+  $async
+  $watch
+  $show
+  $drain }                = SP.export()
+#...........................................................................................................
+{ jr, }                   = CND
+PATH                      = require 'path'
+# glob                      = require 'glob'
+# FS                        = require 'fs'
+
+
+
 ###
 blueprints/
 
@@ -57,6 +93,39 @@ microwave/
 """
 
 # '/blueprints/@/xxx/:off', '../machine/:active', '@/on()', '@/:on'
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'relative_path', tests:
+ "x is a nonempty_text":          ( x ) -> @isa.nonempty_text x
+ "x does not start with a slash": ( x ) -> not x.startsWith '/'
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'absolute_path', tests:
+ "x is a nonempty_text":          ( x ) -> @isa.nonempty_text x
+ "x starts with a slash":         ( x ) -> x.startsWith '/'
+
+#-----------------------------------------------------------------------------------------------------------
+new_xxx = () ->
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+add_item = ( me, d ) ->
+  validate.absolute_path d
+  # perform FM.add_atom( ':open',           'aspect',     'door is open'                            );
+  # perform FM.add_pair( '°plug',         ':disconnected',  'state',  true,   'the mains plug is not inserted'            );
+  # perform FM.add_pair( '°ones',           ':even', 'state',  true,    'even # of 1s'  );
+  # await DB.query [ "select FM.emit( $1 );", $key, ]
+return add_item
+
+
+############################################################################################################
+if module is require.main then do =>
+  xxx = @new_xxx()
+  await add_item xxx, '/microwave'
+  await add_item xxx, '/microwave/power'
+  await add_item xxx, '/microwave/power/switch'
+  await add_item xxx, '/microwave/power/switch/:on'
+  await add_item xxx, '/microwave/power/switch/:off'
 
 
 
