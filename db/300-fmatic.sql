@@ -201,6 +201,19 @@ create function FMAT.advance_next() returns FMAT.journal volatile language sql a
   insert into FMAT.journal ( role, path ) select 'trigger', x.path from x
   returning *; $$;
 
+-- ---------------------------------------------------------------------------------------------------------
+\echo :signal ———{ :filename 13 }———:reset
+create view FMAT.current_state as ( select
+    jid           as jid,
+    t             as t,
+    role          as role,
+    path          as path
+  from FMAT.journal
+  where true
+    and ( jid in ( select distinct max( jid ) over ( partition by topic ) as jid
+      from FM.journal where kind = 'state' ) )
+  order by jid );
+
 
 -- =========================================================================================================
 --
