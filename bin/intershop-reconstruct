@@ -1,4 +1,5 @@
 #!/bin/bash
 set -euo pipefail; IFS=$'\n\t'
-node "$intershop_host_path/lib/intershop-reconstruct.js" "$@"
+echo "this is $0"
+nodexh "$intershop_host_path/lib/intershop-reconstruct.js" "$@"
 
