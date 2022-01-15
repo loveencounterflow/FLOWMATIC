@@ -16,7 +16,7 @@
     "executable": "^4.1.1",
     "intershop-rpc": "0.0.2",
     "intertype": "^2.8.0",
-    "shelljs": "0.8.4",
+    "shelljs": "0.8.5",
     "steampipes": "^3.2.0"
   },
   "scripts": {
